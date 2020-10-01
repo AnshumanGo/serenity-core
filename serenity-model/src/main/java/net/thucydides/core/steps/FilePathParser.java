@@ -1,16 +1,15 @@
 package net.thucydides.core.steps;
 
 import net.serenitybdd.core.environment.EnvironmentSpecificConfiguration;
-import net.thucydides.core.ThucydidesSystemProperty;
 import net.thucydides.core.util.EnvironmentVariables;
 import org.apache.commons.lang3.StringUtils;
+
 import java.io.File;
-import java.util.Optional;
 
 /**
  * Builds a file path by substituting environment variables.
  * Supported environment variables include $HOME, $USERDIR and $DATADIR.
- * $DATADIR is provided by setting the thucydides.data.dir environment property.
+ * $DATADIR is provided by setting the serenity.data.dir environment property.
  */
 public class FilePathParser {
     private final EnvironmentVariables environmentVariables;
@@ -30,14 +29,17 @@ public class FilePathParser {
         localizedPath = injectVariable(localizedPath, "USERPROFILE", valueDefinedIn(environmentVariables,"user.home"));
         localizedPath = injectVariable(localizedPath, "user.dir", valueDefinedIn(environmentVariables,"user.dir"));
         localizedPath = injectVariable(localizedPath, "APPDATA", valueDefinedIn(environmentVariables,"APPDATA"));
-        localizedPath = injectVariable(localizedPath, "DATADIR",valueDefinedIn(environmentVariables,"thucydides.data.dir"));
+        localizedPath = injectVariable(localizedPath, "DATADIR",valueDefinedIn(environmentVariables,"serenity.data.dir"));
 
         return localizedPath;
     }
 
     private String valueDefinedIn(EnvironmentVariables environmentVariables, String propertyName) {
-        return (environmentVariables.getValue(propertyName) != null)
-                ? environmentVariables.getValue(propertyName) : environmentVariables.getProperty(propertyName);
+        return EnvironmentSpecificConfiguration.from(environmentVariables).getOptionalProperty(propertyName)
+                .orElse(environmentVariables.getValue(propertyName));
+//
+//        return (environmentVariables.getValue(propertyName) != null)
+//                ? environmentVariables.getValue(propertyName) : environmentVariables.getProperty(propertyName);
     }
 
     private String operatingSystemLocalized(String testDataSource) {

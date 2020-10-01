@@ -34,4 +34,5 @@ public class Text extends TargetedUIState<String> {
                 .map(WebElementFacade::getText)
                 .collect(Collectors.toList());
     }
+
 }

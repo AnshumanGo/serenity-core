@@ -7,7 +7,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
-import static net.thucydides.core.ThucydidesSystemProperty.*;
+import static net.thucydides.core.ThucydidesSystemProperty.IO_BLOCKING_COEFFICIENT;
+import static net.thucydides.core.ThucydidesSystemProperty.REPORT_THREADS;
 
 public class NumberOfThreads {
 
@@ -34,7 +35,6 @@ public class NumberOfThreads {
     public int forIO() {
         final int numberOfCores = Runtime.getRuntime().availableProcessors();
         int reportThreads = configuredReportThreads().orElse((int) (numberOfCores / (1 - blockingCoefficientForIO)));
-        LOGGER.info("Configured report threads: {}", reportThreads);
         return reportThreads;
     }
 

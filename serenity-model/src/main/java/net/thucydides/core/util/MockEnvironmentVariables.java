@@ -1,16 +1,16 @@
 package net.thucydides.core.util;
 
-import net.serenitybdd.core.collect.*;
-import net.serenitybdd.core.environment.*;
-import org.apache.commons.lang3.*;
+import net.serenitybdd.core.collect.NewMap;
+import net.serenitybdd.core.environment.ConfiguredEnvironment;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
-import java.util.stream.*;
+import java.util.stream.Collectors;
 
 public class MockEnvironmentVariables implements EnvironmentVariables {
 
     private Properties properties = new Properties();
-    private Map<String, String> values = new HashMap();
+    private Map<String, String> values = new HashMap<>();
 
     public MockEnvironmentVariables() {
         this.properties.setProperty("user.home", System.getProperty("user.home"));
@@ -89,7 +89,11 @@ public class MockEnvironmentVariables implements EnvironmentVariables {
     }
 
     public String getProperty(String name) {
-        return properties.getProperty(name);
+        if (name != null) {
+            return properties.getProperty(name);
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -158,6 +162,24 @@ public class MockEnvironmentVariables implements EnvironmentVariables {
     @Override
     public String injectSystemPropertiesInto(String value) {
         return value;
+    }
+
+    @Override
+    public Map<String, String> asMap() {
+        Map<String, String> environmentValues = new HashMap<>();
+
+        values.keySet().forEach(
+                key -> environmentValues.put(key, values.get(key))
+        );
+        properties.stringPropertyNames().forEach(
+                key -> environmentValues.put(key, properties.getProperty(key))
+        );
+        return environmentValues;
+    }
+
+    @Override
+    public Map<String, String> simpleSystemPropertiesAsMap() {
+        return new HashMap<>();
     }
 
     public void setValue(String name, String value) {

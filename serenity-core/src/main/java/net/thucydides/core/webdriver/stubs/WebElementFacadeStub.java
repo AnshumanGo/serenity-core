@@ -1,71 +1,22 @@
 package net.thucydides.core.webdriver.stubs;
 
-import com.google.gson.Gson;
 import net.serenitybdd.core.pages.*;
-import net.serenitybdd.core.time.InternalSystemClock;
-import net.thucydides.core.webdriver.javascript.JavascriptExecutorFacade;
 import org.openqa.selenium.*;
-import org.openqa.selenium.interactions.internal.Coordinates;
+import org.openqa.selenium.interactions.Coordinates;
 import org.openqa.selenium.support.ui.Wait;
 
-import java.lang.reflect.Type;
 import java.time.Duration;
 import java.time.temporal.TemporalUnit;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public class WebElementFacadeStub implements WebElementFacade {
 
-    protected WebElement getElement() {
+    public WebElement getElement() {
         return this;
     }
-
-    protected JavascriptExecutorFacade getJavascriptExecutorFacade() {
-        return new JavascriptExecutorFacade() {
-
-            @Override
-            protected Gson getGson() {
-                return null;
-            }
-
-            @Override
-            public void registerTypeAdapter(Type type, Object typeAdapter) {
-            }
-
-            @Override
-            public Object executeScript(String script) {
-                return null;
-            }
-
-            @Override
-            public Object executeScript(String script, Object... params) {
-                return null;
-            }
-
-            @Override
-            public <T> T deserializeScriptResultAs(Class<T> classOfT, String script, Map<String, Object> injectedFields, Object... params) throws IllegalAccessException {
-                return null;
-            }
-
-            @Override
-            public <T> T deserializeScriptResultAs(Class<T> classOfT, String script, Object... params) throws IllegalAccessException {
-                return null;
-            }
-
-            @Override
-            public <T> List<T> deserializeScriptResultAsListOf(String script, Object... params) {
-                return null;
-            }
-        };
-    }
-
-    protected InternalSystemClock getClock() {
-        return new InternalSystemClock();
-    }
-
 
     @Override
     public WebElementFacade then(String xpathOrCssSelector) {
@@ -100,13 +51,13 @@ public class WebElementFacadeStub implements WebElementFacade {
     }
 
     @Override
-    public List<WebElementFacade> thenFindAll(String xpathOrCssSelector) {
-        return new ArrayList<>();
+    public ListOfWebElementFacades thenFindAll(String xpathOrCssSelector) {
+        return new ListOfWebElementFacades(new ArrayList<>());
     }
 
     @Override
-    public List<WebElementFacade> thenFindAll(String xpathOrCssSelector, Object... arguments) {
-        return new ArrayList<>();
+    public ListOfWebElementFacades thenFindAll(String xpathOrCssSelector, Object... arguments) {
+        return new ListOfWebElementFacades(new ArrayList<>());
     }
 
     private List<WebElementFacade> webElementFacadesFrom(List<WebElement> nestedElements) {
@@ -134,8 +85,8 @@ public class WebElementFacadeStub implements WebElementFacade {
     }
 
     @Override
-    public List<WebElementFacade> thenFindAll(By selector) {
-        return new ArrayList<>();
+    public ListOfWebElementFacades thenFindAll(By selector) {
+        return new ListOfWebElementFacades(new ArrayList<>());
     }
 
     @Override
@@ -519,8 +470,10 @@ public class WebElementFacadeStub implements WebElementFacade {
      * Wait for an element to be visible and enabled, and then click on it.
      */
     @Override
-    public void click() {
-    }
+    public void click() {}
+
+    @Override
+    public void click(ClickStrategy clickStrategy) {}
 
     @Override
     public void clear() {
@@ -580,7 +533,7 @@ public class WebElementFacadeStub implements WebElementFacade {
     }
 
     public WebElement getWrappedElement() {
-        return this;
+        return new WrappedElementStub();
     }
 
     @Override

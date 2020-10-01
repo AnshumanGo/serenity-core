@@ -8,10 +8,9 @@ import net.thucydides.core.reports.html.DescriptionSplitter;
 import net.thucydides.core.requirements.model.Requirement;
 import net.thucydides.core.requirements.reports.cucumber.FeatureFileScenarioOutcomes;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
-
-import static java.util.stream.Collectors.groupingBy;
 
 public class ScenarioOutcomes {
 
@@ -51,8 +50,10 @@ public class ScenarioOutcomes {
 
     public static ScenarioOutcome outcomeFrom(TestOutcome testOutcome) {
 
+        String featureName = (testOutcome.getUserStory() != null) ? testOutcome.getUserStory().getName() : "";
+        String scenarioName = testOutcome.getName();
         List<String> exampleTables = (testOutcome.isDataDriven()) ?
-                Collections.singletonList(testOutcome.getDataTable().toMarkdown()) : Collections.EMPTY_LIST;
+                Collections.singletonList(testOutcome.getDataTable().toMarkdown(featureName, scenarioName)) : Collections.EMPTY_LIST;
 
         String userStoryName = (testOutcome.getUserStory() != null) ? testOutcome.getUserStory().getName() : null;
         String userStoryReportName = (testOutcome.getUserStory() != null) ? testOutcome.getUserStory().getReportName() : null;

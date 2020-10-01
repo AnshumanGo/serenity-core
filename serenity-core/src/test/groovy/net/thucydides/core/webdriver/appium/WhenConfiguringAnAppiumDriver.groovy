@@ -5,7 +5,6 @@ import net.thucydides.core.util.MockEnvironmentVariables
 import net.thucydides.core.util.PathProcessor
 import net.thucydides.core.webdriver.MobilePlatform
 import net.thucydides.core.webdriver.ThucydidesConfigurationException
-import net.thucydides.core.webdriver.WebDriverFacade
 import org.openqa.selenium.remote.DesiredCapabilities
 import org.openqa.selenium.remote.RemoteWebDriver
 import spock.lang.Specification
@@ -66,9 +65,9 @@ class WhenConfiguringAnAppiumDriver extends Specification {
         then:
         appiumConfiguration.targetPlatform == expectedPlatform
         where:
-        env       | context      | expectedPlatform
-        "IOS"     | "Oreo"       | MobilePlatform.IOS
-        "android" | "IOS6.0"     | MobilePlatform.ANDROID
+        env       | context  | expectedPlatform
+        "IOS"     | "Oreo"   | MobilePlatform.IOS
+        "android" | "IOS6.0" | MobilePlatform.ANDROID
     }
 
     def "the platform may be defined by the driver capabilities"() {
@@ -198,7 +197,63 @@ class WhenConfiguringAnAppiumDriver extends Specification {
         appiumConfiguration.capabilities.getCapability("appium:unknown") == "value"
     }
 
+    def "should get default environment specific properties when no environment is specified"() {
+        given:
+        environmentVariables.setProperty("environments.default.appium.showChromedriverLog", "true")
+        environmentVariables.setProperty("environments.default.appium.showIOSLog", "true")
+        environmentVariables.setProperty("appium.app", 'classpath:/apps/dummy-app')
+        when:
+        def appiumConfiguration = AppiumConfiguration.from(environmentVariables)
+        then:
+        appiumConfiguration.capabilities.getCapability("showChromedriverLog") == "true"
+        appiumConfiguration.capabilities.getCapability("showIOSLog") == "true"
+        appiumConfiguration.capabilities.capabilityNames.size() == 4
+    }
 
+    def "should get properties defined in all environments plus default environment properties"() {
+        given:
+        environmentVariables.setProperty("environments.default.appium.showChromedriverLog", "true")
+        environmentVariables.setProperty("environments.all.appium.autoWebview", "true")
+        environmentVariables.setProperty("appium.app", 'classpath:/apps/dummy-app')
+        when:
+        def appiumConfiguration = AppiumConfiguration.from(environmentVariables)
+        then:
+        appiumConfiguration.capabilities.getCapability("showChromedriverLog") == "true"
+        appiumConfiguration.capabilities.getCapability("autoWebview") == "true"
+        appiumConfiguration.capabilities.capabilityNames.size() == 4
+
+    }
+
+    def "should get only the environment defined properties when using specific environments"() {
+        given:
+        environmentVariables.setProperty("environments.android.appium.showChromedriverLog", "true")
+        environmentVariables.setProperty("environments.ios.appium.showIOSLog", "true")
+        environmentVariables.setProperty("environment", "android")
+        environmentVariables.setProperty("appium.app", 'classpath:/apps/dummy-app')
+        when:
+        def appiumConfiguration = AppiumConfiguration.from(environmentVariables)
+        then:
+        appiumConfiguration.capabilities.getCapability("showChromedriverLog") == "true"
+        !appiumConfiguration.capabilities.capabilityNames.contains("showIOSLog")
+
+    }
+
+    def "should get properties defined in all environments plus specific environment properties"() {
+        given:
+        environmentVariables.setProperty("environments.android.appium.showChromedriverLog", "true")
+        environmentVariables.setProperty("environments.ios.appium.showIOSLog", "true")
+        environmentVariables.setProperty("environments.all.appium.autoWebview", "true")
+        environmentVariables.setProperty("environment", "ios")
+        environmentVariables.setProperty("appium.app", 'classpath:/apps/dummy-app')
+        when:
+        def appiumConfiguration = AppiumConfiguration.from(environmentVariables)
+        then:
+        appiumConfiguration.capabilities.getCapability("showIOSLog") == "true"
+        appiumConfiguration.capabilities.getCapability("autoWebview") == "true"
+        !appiumConfiguration.capabilities.capabilityNames.contains("showChromedriverLog")
+        appiumConfiguration.capabilities.capabilityNames.size() == 4
+
+    }
 
 
 }

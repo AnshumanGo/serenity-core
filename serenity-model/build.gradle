@@ -40,6 +40,10 @@ dependencies {
         exclude group: 'cglib', module: 'cglib-nodep'
 //        exclude group: 'org.objenesis', module: 'objenesis'
     }
+    compile ('org.reflections:reflections:0.9.11') {
+        exclude group:"com.google.guava"
+    }
+
     testCompile ("com.github.tomakehurst:wiremock:$wiremockCoreVersion") {
         exclude group: 'com.google.guava', module:'guava'
         exclude group: 'org.apache.httpcomponents', module:'httpclient'
@@ -53,16 +57,19 @@ dependencies {
 
     compile ("com.vladsch.flexmark:flexmark-all:0.34.30") {
         exclude group:"org.jsoup", module:"jsoup"
+        exclude group:"junit", module:"junit"
     }
+    compile "junit:junit:${junitVersion}"
     compile 'es.nitaur.markdown:txtmark:0.16'
 
-    compileOnly "org.junit.jupiter:junit-jupiter-api:${junit5_version}"
+    compileOnly "org.junit.jupiter:junit-jupiter-api:${junit5Version}"
 
     testCompile project(':serenity-test-utils')
     testCompile project(':serenity-sample-alternative-resources')
     testCompile("org.spockframework:spock-core:${spockVersion}") {
         exclude group: "junit"
         exclude group: "org.codehaus.groovy"
+        exclude group: "org.junit.platform"
     }
-    testCompile "org.junit.jupiter:junit-jupiter-api:${junit5_version}"
+    testCompile "org.junit.jupiter:junit-jupiter-api:${junit5Version}"
 }

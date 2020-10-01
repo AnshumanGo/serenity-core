@@ -6,7 +6,6 @@ import net.serenitybdd.core.Serenity;
 import net.serenitybdd.core.collect.NewList;
 import net.serenitybdd.core.environment.ConfiguredEnvironment;
 import net.serenitybdd.core.eventbus.Broadcaster;
-import net.serenitybdd.core.webdriver.enhancers.AtTheEndOfAWebDriverTest;
 import net.thucydides.core.ThucydidesSystemProperty;
 import net.thucydides.core.events.TestLifecycleEvents;
 import net.thucydides.core.model.*;
@@ -241,6 +240,10 @@ public class StepEventBus {
         storyUnderTest = story;
     }
 
+    public void updateExampleLineNumber(int lineNumber) {
+        getBaseStepListener().updateExampleLineNumber(lineNumber);
+    }
+
     public void testSuiteStarted(final Story story) {
         LOGGER.debug("Test suite started for story {}", story);
         updateStoryUnderTest(story);
@@ -314,7 +317,7 @@ public class StepEventBus {
 
     private TestOutcome checkForEmptyScenarioIn(TestOutcome outcome) {
         if (isAGherkinScenario(outcome)) {
-            if (outcome.getTestSteps().isEmpty()) {
+            if (outcome.hasNoSteps()) {
                 return outcome.withResult(TestResult.PENDING);
             }
         }

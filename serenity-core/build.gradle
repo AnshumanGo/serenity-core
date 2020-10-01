@@ -1,4 +1,4 @@
-import org.apache.tools.ant.filters.*
+import org.apache.tools.ant.filters.ReplaceTokens
 
 ext {
     bintrayPackage = 'serenity-core'
@@ -102,6 +102,11 @@ dependencies {
 
     compile("com.paulhammant:ngwebdriver:${ngwebdriver}") {
         exclude group: 'org.seleniumhq.selenium'
+        exclude group: "net.bytebuddy", module:"byte-buddy"
+        exclude group: "net.bytebuddy", module:"byte-buddy-agent"
+    }
+
+    compile("com.assertthat:selenium-shutterbug:${shutterBugVersion}"){
         exclude group: "net.bytebuddy", module:"byte-buddy"
         exclude group: "net.bytebuddy", module:"byte-buddy-agent"
     }
@@ -225,10 +230,20 @@ dependencies {
 
     compile ("com.vladsch.flexmark:flexmark-all:0.34.30") {
         exclude group:"org.jsoup", module:"jsoup"
+        exclude group:"junit", module:"junit"
+    }
+
+    compile("io.github.bonigarcia:webdrivermanager:${webdrivermanagerVersion}") {
+        exclude group:"org.slf4j", module:"slf4j-api"
+        exclude group:"commons-io", module:"commons-io"
+        exclude group:"org.apache.commons", module:"commons-lang3"
+        exclude group:"org.jsoup", module:"jsoup"
+        exclude group:"commons-codec", module:"commons-codec"
     }
 
 
     testCompile "junit:junit:${junitVersion}"
+    testCompile "org.opentest4j:opentest4j:${opentest4jVersion}"
     testCompile "org.springframework:spring-test:${springVersion}"
     testCompile "org.springframework:spring-context:${springVersion}"
     testCompile "org.springframework:spring-context-support:${springVersion}"

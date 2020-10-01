@@ -15,9 +15,7 @@ import org.junit.Test;
 import org.openqa.selenium.InvalidArgumentException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.support.FindBy;
 
 import java.io.File;
@@ -27,8 +25,6 @@ import java.net.URISyntaxException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 
 public class WhenUploadingFiles {
 
@@ -71,7 +67,8 @@ public class WhenUploadingFiles {
     public static void open_local_static_site() {
         EnvironmentVariables environmentVariables = new MockEnvironmentVariables();
         environmentVariables.setProperty("headless.mode","true");
-        driver = new WebDriverFacade(ChromeDriver.class, new WebDriverFactory(), environmentVariables);
+//        driver = new WebDriverFacade(ChromeDriver.class, new WebDriverFactory(), environmentVariables);
+        driver = new WebDriverFacade(HtmlUnitDriver.class, new WebDriverFactory(), environmentVariables);
         pageFactory = new Pages(driver);
         openStaticTestSite(driver);
     }

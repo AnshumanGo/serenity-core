@@ -77,7 +77,6 @@ allprojects {
             force   "commons-collections:commons-collections:${commonsCollectionsVersion}",
                     "com.thoughtworks.xstream:xstream:${xstreamVersion}",
                     "xml-apis:xml-apis:${xmlApisVersion}",
-                    "org.apache.commons:commons-text:${commonsText}",
                     "org.apache.httpcomponents:httpmime:${httpclientVersion}",
                     "org.eclipse.jetty:jetty-http:${jettyVersion}",
                     "org.eclipse.jetty:jetty-util:${jettyVersion}",
@@ -246,7 +245,13 @@ subprojects {
         compile "org.objenesis:objenesis:${objenesisVersion}"
         compile "org.slf4j:slf4j-api:${slf4jVersion}"
         compile "xml-apis:xml-apis:${xmlApisVersion}"
-        compile "io.cucumber:cucumber-core:${cucumberVersion}"
+        compile ("io.cucumber:cucumber-core:${cucumberVersion}") {
+            exclude group: "org.apiguardian", module: 'apiguardian-api'
+        }
+        compile ("io.cucumber:cucumber-java:${cucumberVersion}") {
+            exclude group: "org.apiguardian", module: 'apiguardian-api'
+        }
+
 
         compile("commons-logging:commons-logging:${commonsLoggingVersion}")
         testCompile "junit:junit:${junitVersion}"
@@ -256,7 +261,7 @@ subprojects {
         /* Required for Java 9 and higher */
         compile "javax.xml.bind:jaxb-api:${jaxbApiVersion}"
         compile "com.sun.xml.bind:jaxb-core:${jaxbCoreVersion}"
-        compile "com.sun.xml.bind:jaxb-impl:${jaxbCoreVersion}"
+        compile "com.sun.xml.bind:jaxb-impl:${jaxbImplVersion}"
         compile "javax.activation:activation:${activationVersion}"
 
         testCompile("ch.qos.logback:logback-classic:${logbackVersion}") {
@@ -274,10 +279,11 @@ subprojects {
 
         testCompile("org.codehaus.groovy:groovy-all:${groovyVersion}") {
             exclude group: "org.junit.jupiter"
+            exclude group: "com.google.inject"
         }
         testCompile("org.spockframework:spock-core:${spockVersion}") {
-            exclude group: "junit"
             exclude group: "org.codehaus.groovy"
+            exclude group: "org.junit.platform"
 
         }
         testCompile "org.assertj:assertj-core:${assertjVersion}"

@@ -6,7 +6,6 @@ import net.serenitybdd.screenplay.Actor;
 import net.serenitybdd.screenplay.abilities.BrowseTheWeb;
 import net.thucydides.core.webdriver.ThucydidesConfigurationException;
 import org.openqa.selenium.By;
-import org.openqa.selenium.remote.RemoteWebDriver;
 
 import java.time.Duration;
 import java.util.List;
@@ -104,6 +103,6 @@ public class ByTarget extends Target {
     }
 
     public ByTarget called(String name) {
-        return new ByTarget(targetElementName, locator, androidLocator, iosLocator, iFrame, timeout);
+        return new ByTarget(name, locator, androidLocator, iosLocator, iFrame, timeout);
     }
 }

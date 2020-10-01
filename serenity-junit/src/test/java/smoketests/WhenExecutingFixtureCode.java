@@ -11,26 +11,19 @@ import net.thucydides.core.annotations.Managed;
 import net.thucydides.core.annotations.Step;
 import net.thucydides.core.annotations.Steps;
 import net.thucydides.core.guice.webdriver.WebDriverModule;
-import net.thucydides.core.model.TestOutcome;
 import net.thucydides.core.steps.StepEventBus;
 import net.thucydides.junit.rules.DisableThucydidesHistoryRule;
-import net.thucydides.samples.SamplePassingNonWebScenario;
-import org.hamcrest.MatcherAssert;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
-import org.junit.runner.RunWith;
 import org.junit.runner.notification.RunNotifier;
 import org.junit.runners.model.InitializationError;
 import org.mockito.MockitoAnnotations;
 import org.openqa.selenium.WebDriver;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.is;
 
 public class WhenExecutingFixtureCode extends AbstractTestStepRunnerTest {
 
@@ -83,7 +76,7 @@ public class WhenExecutingFixtureCode extends AbstractTestStepRunnerTest {
 
     public static class ATestWithAFailingStepAndAReactivatedDriver {
 
-        @Managed(driver = "chrome", options = "--headless")
+        @Managed(driver = "htmlunit")
         WebDriver driver;
 
         @Steps
@@ -100,7 +93,7 @@ public class WhenExecutingFixtureCode extends AbstractTestStepRunnerTest {
 
     public static class ATestWithAFailingStepWhereWeReactivateTheDriver {
 
-        @Managed(driver = "chrome", options = "--headless")
+        @Managed(driver = "htmlunit")
         WebDriver driver;
 
         @Steps
@@ -120,7 +113,7 @@ public class WhenExecutingFixtureCode extends AbstractTestStepRunnerTest {
 
     public static class ATestWithAFailingStepWhereWeReactivateTheDriverAndUsingAStepMethod {
 
-        @Managed(driver = "chrome", options = "--headless")
+        @Managed(driver = "htmlunit", options = "--headless")
         WebDriver driver;
 
         @Steps

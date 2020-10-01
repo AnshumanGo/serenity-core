@@ -1,16 +1,13 @@
 package net.thucydides.core.util;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-
+import net.thucydides.core.tags.Taggable;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.Extension;
 import org.junit.runner.RunWith;
@@ -18,7 +15,7 @@ import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.JUnit4;
 import org.junit.runners.model.InitializationError;
 
-import net.thucydides.core.tags.Taggable;
+import java.lang.annotation.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -31,6 +28,7 @@ public class JUnitAdapterUnitTest {
         assertThat(JUnitAdapter.isTestSetupMethod(null)).isFalse();
         assertThat(JUnitAdapter.isATaggableClass(null)).isFalse();
         assertThat(JUnitAdapter.isSerenityTestCase(null)).isFalse();
+        assertThat(JUnitAdapter.isIgnored(null)).isFalse();
     }
 
     @Test
@@ -41,6 +39,7 @@ public class JUnitAdapterUnitTest {
         assertThat(JUnitAdapter.isATaggableClass(NoTestAtAll.class)).isFalse();
         assertThat(JUnitAdapter.isSerenityTestCase(NoTestAtAll.class)).isFalse();
         assertThat(JUnitAdapter.isAssumptionViolatedException(new RuntimeException("Assumption violated!"))).isFalse();
+        assertThat(JUnitAdapter.isIgnored(NoTestAtAll.class.getMethod("justAMethod"))).isFalse();
     }
 
     @Test
@@ -56,6 +55,7 @@ public class JUnitAdapterUnitTest {
         assertThat(JUnitAdapter
                 .isAssumptionViolatedException(new org.junit.AssumptionViolatedException("Assumption violated!")))
                 .isTrue();
+        assertThat(JUnitAdapter.isIgnored(Junit4Test.class.getMethod("shouldBeIgnored"))).isTrue();
     }
 
     @Test
@@ -70,6 +70,7 @@ public class JUnitAdapterUnitTest {
         assertThat(JUnitAdapter
                 .isAssumptionViolatedException(new org.opentest4j.TestAbortedException("Assumption violated!")))
                 .isTrue();
+        assertThat(JUnitAdapter.isIgnored(Junit5Test.class.getDeclaredMethod("shouldBeIgnored"))).isTrue();
     }
 
     public static class NoTestAtAll {
@@ -93,6 +94,11 @@ public class JUnitAdapterUnitTest {
 
         @Test
         public void shouldSucceed() {
+        }
+
+        @Test
+        @Ignore
+        public void shouldBeIgnored() {
         }
 
     }
@@ -136,6 +142,11 @@ public class JUnitAdapterUnitTest {
         @org.junit.jupiter.api.Test
         void shouldSucceed() {
 
+        }
+
+        @org.junit.jupiter.api.Test
+        @Disabled
+        void shouldBeIgnored() {
         }
 
     }

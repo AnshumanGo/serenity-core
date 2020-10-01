@@ -1,19 +1,14 @@
 package net.thucydides.core.util;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.function.Function;
-
-import org.junit.jupiter.api.extension.ExtendWith;
-
 import net.serenitybdd.core.collect.NewList;
 import net.thucydides.core.tags.Taggable;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.extension.ExtendWith;
+
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.util.*;
+import java.util.function.Function;
 
 /**
  * This is an INTERNAL helper class of serenity, it should not be used directly and may be subject to refactoring.
@@ -91,6 +86,13 @@ public class JUnitAdapter {
         return delegateToStrategies(s -> s.isATaggableClass(testClass));
     }
 
+    public static boolean isIgnored(final Method method) {
+        if (method == null) {
+            return false;
+        }
+        return delegateToStrategies(s -> s.isIgnored(method));
+    }
+
     private static boolean delegateToStrategies(
             final Function<JUnitStrategy, Boolean> jUnitStrategyBooleanFunction) {
         return strategies.stream().map(jUnitStrategyBooleanFunction).filter(Boolean::booleanValue).findFirst()
@@ -120,11 +122,14 @@ public class JUnitAdapter {
 
         boolean isATaggableClass(final Class<?> testClass);
 
+        boolean isIgnored(final Method method);
+
     }
 
     private static class JUnit4Strategy implements JUnitStrategy {
 
-        private final List<String> LEGAL_SERENITY_RUNNER_NAMES = NewList.of("SerenityRunner", "ThucydidesRunner");
+        private final List<String> LEGAL_SERENITY_RUNNER_NAMES
+                = NewList.of("SerenityRunner", "ThucydidesRunner", "SerenityParameterizedRunner","ThucydidesParameterizedRunner");
 
         @Override
         public boolean isTestClass(final Class<?> testClass) {
@@ -162,6 +167,15 @@ public class JUnitAdapter {
             return (runWith != null && Taggable.class.isAssignableFrom(runWith.value()));
         }
 
+        @Override
+        public boolean isIgnored(final Method method) {
+            // intentionally left at previous implementation based on annotation name to change as little as possible
+            Annotation[] annotations = method.getAnnotations();
+            return Arrays.stream(annotations).anyMatch(
+                    annotation -> annotation.annotationType().getSimpleName().equals("Ignore")
+            );
+        }
+
     }
 
     private static class JUnit5Strategy implements JUnitStrategy {
@@ -190,6 +204,11 @@ public class JUnitAdapter {
         @Override
         public boolean isSerenityTestCase(Class<?> testClass) {
             return hasSerenityAnnotation(testClass, new HashSet<>());
+        }
+
+        @Override
+        public boolean isIgnored(final Method method) {
+            return (method.getAnnotation(Disabled.class) != null);
         }
 
         private boolean hasSerenityAnnotation(final Class<?> clazz, final Set<Class<?>> checked) {

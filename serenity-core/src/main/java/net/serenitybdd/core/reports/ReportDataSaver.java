@@ -2,6 +2,8 @@ package net.serenitybdd.core.reports;
 
 import net.thucydides.core.model.ReportData;
 import net.thucydides.core.model.TestOutcome;
+import net.thucydides.core.model.TestResult;
+import net.thucydides.core.model.TestStep;
 import net.thucydides.core.steps.StepEventBus;
 
 import java.io.IOException;
@@ -11,7 +13,6 @@ import java.nio.file.Path;
 import java.util.Optional;
 
 import static net.thucydides.core.ThucydidesSystemProperty.SERENITY_REPORT_ENCODING;
-import static net.thucydides.core.ThucydidesSystemProperty.WEBDRIVER_BASE_URL;
 
 public class ReportDataSaver implements WithTitle, AndContent, FromFile {
 
@@ -32,10 +33,18 @@ public class ReportDataSaver implements WithTitle, AndContent, FromFile {
     @Override
     public void andContents(String contents) {
         eventBus.getBaseStepListener().latestTestOutcome().ifPresent(
-                outcome -> outcome.currentStep().ifPresent(
-                        step -> step.withReportData(ReportData.withTitle(title).andContents(contents).asEvidence(isEvidence))
-                )
+                outcome -> currentStepOrBackgroundIn(outcome)
+                             .withReportData(ReportData.withTitle(title).andContents(contents).asEvidence(isEvidence))
         );
+    }
+
+    private TestStep currentStepOrBackgroundIn(TestOutcome outcome) {
+        if (outcome.currentStep().isPresent()) {
+            return outcome.currentStep().get();
+        } else {
+            return outcome.recordStep(TestStep.forStepCalled("Background")
+                           .withResult(TestResult.SUCCESS)).currentStep().get();
+        }
     }
 
     @Override

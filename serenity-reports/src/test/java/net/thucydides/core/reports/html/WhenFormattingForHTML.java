@@ -263,6 +263,23 @@ public class WhenFormattingForHTML {
     }
 
     @Test
+    public void formatter_should_convert_simple_html_tags_in_titles() {
+        EnvironmentVariables environmentVariables = new MockEnvironmentVariables();
+        Formatter formatter = new Formatter(environmentVariables);
+        String formatted = formatter.renderTitle("some <tag>");
+        assertThat(formatted, is("some &lt;tag&gt;"));
+    }
+
+
+    @Test
+    public void formatter_should_convert_empty_html_tags_in_titles() {
+        EnvironmentVariables environmentVariables = new MockEnvironmentVariables();
+        Formatter formatter = new Formatter(environmentVariables);
+        String formatted = formatter.renderTitle("Some title including <> in it");
+        assertThat(formatted, is("Some title including &lt;&gt; in it"));
+    }
+
+    @Test
     public void should_identify_issues_in_a_text() {
         List<String> issues = ReportFormatter.shortenedIssuesIn("A scenario about issue #123");
 

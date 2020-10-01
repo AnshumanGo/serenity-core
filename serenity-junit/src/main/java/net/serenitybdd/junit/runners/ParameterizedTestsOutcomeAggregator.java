@@ -1,11 +1,11 @@
 package net.serenitybdd.junit.runners;
 
 import net.thucydides.core.model.*;
-import org.apache.commons.lang3.*;
-import org.junit.runner.*;
+import org.apache.commons.lang3.StringUtils;
+import org.junit.runner.Runner;
 
 import java.util.*;
-import java.util.stream.*;
+import java.util.stream.Collectors;
 
 public class ParameterizedTestsOutcomeAggregator {
     private final SerenityParameterizedRunner serenityParameterizedRunner;
@@ -39,7 +39,7 @@ public class ParameterizedTestsOutcomeAggregator {
             recordTestOutcomeAsSteps(testOutcome, scenarioOutcome);
 
             if (testOutcome.isManual()) {
-                scenarioOutcome = scenarioOutcome.asManualTest();
+                scenarioOutcome = scenarioOutcome.setToManual();
             }
 
             if (testOutcome.isDataDriven()) {

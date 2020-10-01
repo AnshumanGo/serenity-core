@@ -1,7 +1,5 @@
 package net.serenitybdd.core.webdriver.driverproviders;
 
-import com.google.common.base.Optional;
-import com.google.gson.JsonObject;
 import net.serenitybdd.core.webdriver.servicepools.DriverServiceExecutable;
 import net.thucydides.core.ThucydidesSystemProperty;
 import net.thucydides.core.util.EnvironmentVariables;
@@ -10,13 +8,13 @@ import net.thucydides.core.webdriver.capabilities.ChromePreferences;
 import net.thucydides.core.webdriver.chrome.OptionsSplitter;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.PageLoadStrategy;
-import org.openqa.selenium.Proxy;
 import org.openqa.selenium.UnexpectedAlertBehaviour;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -25,6 +23,12 @@ import static net.thucydides.core.ThucydidesSystemProperty.*;
 public class ChromeDriverCapabilities implements DriverCapabilitiesProvider {
 
     private final static List<String> AUTOMATION_OPTIONS = Arrays.asList("--enable-automation", "--test-type");
+    private static final List<String> LIST_BASED_EXPERIMENTAL_OPTIONS = Arrays.asList(
+            "args",
+            "extensions",
+            "excludeSwitches",
+            "windowTypes"
+    );
     private final EnvironmentVariables environmentVariables;
     private final String driverOptions;
 
@@ -35,11 +39,7 @@ public class ChromeDriverCapabilities implements DriverCapabilitiesProvider {
 
     @Override
     public DesiredCapabilities getCapabilities() {
-        DesiredCapabilities capabilities = DesiredCapabilities.chrome();
-
-        ChromeOptions chromeOptions = configuredOptions();
-
-        capabilities.setCapability(ChromeOptions.CAPABILITY, chromeOptions);
+        DesiredCapabilities capabilities = new DesiredCapabilities(configuredOptions());
 
         String chromeSwitches = ThucydidesSystemProperty.CHROME_SWITCHES.from(environmentVariables);
         capabilities.setCapability("chrome.switches", chromeSwitches);
@@ -133,13 +133,22 @@ public class ChromeDriverCapabilities implements DriverCapabilitiesProvider {
     private void addPreferencesTo(ChromeOptions options) {
 
         Map<String, Object> chromePreferences = ChromePreferences.startingWith("chrome_preferences.").from(environmentVariables);
-
         chromePreferences.putAll(ChromePreferences.startingWith("chrome.preferences.").from(environmentVariables));
+        Map<String, Object> sanitizedChromePreferences = cleanUpPathsIn(chromePreferences);
 
         if (!chromePreferences.isEmpty()) {
-            options.setExperimentalOption("prefs", chromePreferences);
+            options.setExperimentalOption("prefs", sanitizedChromePreferences);
         }
     }
+
+    private Map<String, Object> cleanUpPathsIn(Map<String, Object> chromePreferences) {
+        Map<String, Object> preferences = new HashMap<>();
+        chromePreferences.forEach(
+                (key,value) -> preferences.put(key.toString(), SanitisedBrowserPreferenceValue.of(value))
+        );
+        return preferences;
+    }
+
 
     private void addExperimentalOptionsTo(ChromeOptions options) {
 
@@ -147,7 +156,15 @@ public class ChromeDriverCapabilities implements DriverCapabilitiesProvider {
                                                                          .from(environmentVariables);
 
         chromeExperimentalOptions.keySet().forEach(
-                key -> options.setExperimentalOption(key, chromeExperimentalOptions.get(key))
+                key -> {
+                    Object value = chromeExperimentalOptions.get(key);
+                    if( LIST_BASED_EXPERIMENTAL_OPTIONS.contains(key) ) {
+                        List<String> arguments = new OptionsSplitter().split((String)value);
+                        options.setExperimentalOption(key, arguments);
+                    }else {
+                        options.setExperimentalOption(key, value);
+                    }
+                }
         );
     }
 

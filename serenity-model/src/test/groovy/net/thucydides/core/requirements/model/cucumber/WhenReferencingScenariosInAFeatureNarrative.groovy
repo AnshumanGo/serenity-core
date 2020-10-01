@@ -1,17 +1,35 @@
 package net.thucydides.core.requirements.model.cucumber
 
-import cucumber.runtime.io.MultiLoader
-import cucumber.runtime.model.CucumberFeature
+import io.cucumber.core.gherkin.messages.internal.gherkin.Gherkin
+import io.cucumber.messages.IdGenerator
+import io.cucumber.messages.Messages.Envelope
+import io.cucumber.messages.Messages.GherkinDocument.Feature
 import spock.lang.Specification
 
-import static net.thucydides.core.requirements.model.cucumber.ScenarioDisplayOption.WithTitle
+import java.util.stream.Collectors
 
 class WhenReferencingScenariosInAFeatureNarrative extends Specification {
 
     def featureFile = "src/test/resources/serenity-cucumber/features/maintain_my_todo_list/filtering_todos.feature"
-    def features = CucumberFeature.load(new MultiLoader(CucumberParser.class.getClassLoader()), [featureFile])
-    def filteringTodoFeature = features[0].getGherkinFeature().feature
+    def features = loadCucumberFeatures([featureFile])
+    def filteringTodoFeature = features[0]
 
+    private List<Feature> loadCucumberFeatures(List<String> listOfFiles) {
+        IdGenerator idGenerator = new IdGenerator.Incrementing();
+        List<Feature> loadedFeatures = new ArrayList<>();
+        boolean includeSource = false;
+        boolean includeAst = true;
+        boolean includePickles = false;
+        List<Envelope> envelopes = Gherkin.fromPaths(listOfFiles, includeSource, includeAst, includePickles, idGenerator).collect(Collectors.toList());
+        for(Envelope envelope : envelopes )
+        {
+            if(envelope.hasGherkinDocument() && envelope.getGherkinDocument().hasFeature())
+            {
+                loadedFeatures.add(envelope.getGherkinDocument().getFeature());
+            }
+        }
+        return loadedFeatures;
+    }
     def "Should be able to identify scenarios in a feature file by name"() {
         when:
         def scenarioDescription = ReferencedScenario.in(filteringTodoFeature).withName("View only completed items").asGivenWhenThen()
@@ -46,7 +64,7 @@ class WhenReferencingScenariosInAFeatureNarrative extends Specification {
 
     def "Should return the examples table alone for scenario outline if requested"() {
         when:
-        def examples = ReferencedScenario.in(filteringTodoFeature).withName("Do many things").asExampleTable(WithTitle)
+        def examples = ReferencedScenario.in(filteringTodoFeature).withName("Do many things").asExampleTable(ScenarioDisplayOption.WithTitle)
         then:
         examples.isPresent()
         and:
@@ -54,16 +72,16 @@ class WhenReferencingScenariosInAFeatureNarrative extends Specification {
 
 | tasks                       | filter    | expected      |&nbsp;|
 |-----------------------------|-----------|---------------|---|
-| Buy some milk, Walk the dog | Completed | Walk the dog  |{example-result:Filtering things I need to do!Do many things[0][0]}|
-| Buy some milk, Walk the dog | Active    | Buy some milk |{example-result:Filtering things I need to do!Do many things[0][1]}|
+| Buy some milk, Walk the dog | Completed | Walk the dog  |{example-result:Filtering things I need to do[31]}|
+| Buy some milk, Walk the dog | Active    | Buy some milk |{example-result:Filtering things I need to do[32]}|
 
 [<i class="fa fa-info-circle"></i> More details](#2d2f4c1a070b3434226e9ee8cf6f2d75c0e2847d548719e5ba07a47c67c1030a)
 ### Do some other things
 
 | tasks                       | filter    | expected      |&nbsp;|
 |-----------------------------|-----------|---------------|---|
-| Buy some milk, Walk the dog | Completed | Walk the dog  |{example-result:Filtering things I need to do!Do many things[1][0]}|
-| Buy some milk, Walk the dog | Active    | Buy some milk |{example-result:Filtering things I need to do!Do many things[1][1]}|
+| Buy some milk, Walk the dog | Completed | Walk the dog  |{example-result:Filtering things I need to do[36]}|
+| Buy some milk, Walk the dog | Active    | Buy some milk |{example-result:Filtering things I need to do[37]}|
 
 [<i class="fa fa-info-circle"></i> More details](#2d2f4c1a070b3434226e9ee8cf6f2d75c0e2847d548719e5ba07a47c67c1030a)
 """
@@ -72,7 +90,7 @@ class WhenReferencingScenariosInAFeatureNarrative extends Specification {
 
     def "Should not change lines with no scenario references"() {
         expect:
-            DescriptionWithScenarioReferences.from(filteringTodoFeature).forText("No scenario reference") == "No scenario reference"
+        DescriptionWithScenarioReferences.from(filteringTodoFeature).forText("No scenario reference") == "No scenario reference"
     }
 
     def "Should replace scenario references with the Given-When-Then text"() {
@@ -105,15 +123,15 @@ Then her todo list should contain Walk the dog    {result:Filtering things I nee
                 forText("{Examples} Do many things") ==  """
 | tasks                       | filter    | expected      |&nbsp;|
 |-----------------------------|-----------|---------------|---|
-| Buy some milk, Walk the dog | Completed | Walk the dog  |{example-result:Filtering things I need to do!Do many things[0][0]}|
-| Buy some milk, Walk the dog | Active    | Buy some milk |{example-result:Filtering things I need to do!Do many things[0][1]}|
+| Buy some milk, Walk the dog | Completed | Walk the dog  |{example-result:Filtering things I need to do[31]}|
+| Buy some milk, Walk the dog | Active    | Buy some milk |{example-result:Filtering things I need to do[32]}|
 
 [<i class="fa fa-info-circle"></i> More details](#2d2f4c1a070b3434226e9ee8cf6f2d75c0e2847d548719e5ba07a47c67c1030a)
 
 | tasks                       | filter    | expected      |&nbsp;|
 |-----------------------------|-----------|---------------|---|
-| Buy some milk, Walk the dog | Completed | Walk the dog  |{example-result:Filtering things I need to do!Do many things[1][0]}|
-| Buy some milk, Walk the dog | Active    | Buy some milk |{example-result:Filtering things I need to do!Do many things[1][1]}|
+| Buy some milk, Walk the dog | Completed | Walk the dog  |{example-result:Filtering things I need to do[36]}|
+| Buy some milk, Walk the dog | Active    | Buy some milk |{example-result:Filtering things I need to do[37]}|
 
 [<i class="fa fa-info-circle"></i> More details](#2d2f4c1a070b3434226e9ee8cf6f2d75c0e2847d548719e5ba07a47c67c1030a)
 """
@@ -124,7 +142,7 @@ Then her todo list should contain Walk the dog    {result:Filtering things I nee
 
     def "should render narratives with example tables"() {
         given:
-            CucumberParser parser = new CucumberParser()
+        CucumberParser parser = new CucumberParser()
         when:
             def narrative = parser.loadFeatureNarrative(new File(featureFile))
         then:

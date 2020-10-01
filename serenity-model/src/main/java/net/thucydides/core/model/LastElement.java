@@ -4,7 +4,6 @@ import com.google.common.base.Splitter;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -64,7 +63,7 @@ public class LastElement {
     }
 
     private static List<String> elementsOf(String path) {
-        return Splitter.on(Pattern.compile("[\\.|/]")).splitToList(path);
+        return  Splitter.on(Pattern.compile("[\\|/]")).splitToList(path);
     }
 
 

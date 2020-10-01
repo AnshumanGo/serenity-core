@@ -1,12 +1,16 @@
 package net.thucydides.core.webdriver;
 
-import net.thucydides.core.util.*;
-import org.openqa.selenium.*;
-import org.openqa.selenium.remote.*;
+import net.thucydides.core.util.EnvironmentVariables;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.remote.SessionId;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import static org.apache.commons.lang3.StringUtils.*;
+import static org.apache.commons.lang3.StringUtils.isEmpty;
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
 
 /**
  * Manage WebDriver instances.
@@ -135,6 +139,10 @@ public class SerenityWebdriverManager implements WebdriverManager {
 
     public void clearCurrentDriver() {
         inThisTestThread().resetCurrentDriver();
+    }
+
+    public static void resetThisThread() {
+        webdriverInstancesThreadLocal.remove();
     }
 
     @Override
