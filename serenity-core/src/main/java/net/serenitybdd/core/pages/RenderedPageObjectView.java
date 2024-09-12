@@ -195,7 +195,7 @@ public class RenderedPageObjectView {
      * This method will wait until an element is present on the screen, though not necessarily visible.
      */
     public WebElement waitForPresenceOf(final By byElementCriteria) {
-        WebDriverWait wait = new WebDriverWait(driver, waitForTimeout.getSeconds());
+        WebDriverWait wait = new WebDriverWait(driver, waitForTimeout);
         return wait.until(presenceOfElementLocated(byElementCriteria));
     }
 
@@ -250,7 +250,7 @@ public class RenderedPageObjectView {
     }
 
     public WebDriverWait thenWait() {
-        return new WebDriverWait(driver, getWaitForTimeout().getSeconds());
+        return new WebDriverWait(driver, getWaitForTimeout());
     }
 
 
@@ -545,23 +545,23 @@ public class RenderedPageObjectView {
         }
         return matchingElements;
     }
-
-    public static Function<PageObject, List<WebElementFacade>> containingTextAndMatchingCSS(String cssOrXPathLocator, String expectedText) {
-        return page -> page.withTimeoutOf(Duration.ZERO)
-                .findAll(cssOrXPathLocator)
-                .stream()
-                .filter(element -> element.getTextContent().contains(expectedText))
-                .collect(Collectors.toList());
-    }
-
-
-    public static Function<PageObject, List<WebElementFacade>> containingTextAndMatchingCSS(List<String> cssOrXPathLocators, String expectedText) {
-        return page -> page.withTimeoutOf(Duration.ZERO)
-                .findFirstMatching(cssOrXPathLocators)
-                .stream()
-                .filter(element -> element.getTextContent().contains(expectedText))
-                .collect(Collectors.toList());
-    }
+//
+//    public static Function<PageObject, List<WebElementFacade>> containingTextAndMatchingCSS(String cssOrXPathLocator, String expectedText) {
+//        return page -> page.withTimeoutOf(Duration.ZERO)
+//                .findAll(cssOrXPathLocator)
+//                .stream()
+//                .filter(element -> element.getTextContent().contains(expectedText))
+//                .collect(Collectors.toList());
+//    }
+//
+//
+//    public static Function<PageObject, List<WebElementFacade>> containingTextAndMatchingCSS(List<String> cssOrXPathLocators, String expectedText) {
+//        return page -> page.withTimeoutOf(Duration.ZERO)
+//                .findFirstMatching(cssOrXPathLocators)
+//                .stream()
+//                .filter(element -> element.getTextContent().contains(expectedText))
+//                .collect(Collectors.toList());
+//    }
 
     public WebElementFacade find(By bySelector) {
         waitFor(bySelector);

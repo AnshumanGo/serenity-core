@@ -2,8 +2,8 @@ package net.thucydides.core.requirements.model.cucumber
 
 import io.cucumber.core.gherkin.messages.internal.gherkin.Gherkin
 import io.cucumber.messages.IdGenerator
-import io.cucumber.messages.Messages.Envelope
-import io.cucumber.messages.Messages.GherkinDocument.Feature
+import io.cucumber.messages.types.Envelope
+import io.cucumber.messages.types.Feature
 import spock.lang.Specification
 
 import java.util.stream.Collectors
@@ -23,7 +23,7 @@ class WhenReferencingScenariosInAFeatureNarrative extends Specification {
         List<Envelope> envelopes = Gherkin.fromPaths(listOfFiles, includeSource, includeAst, includePickles, idGenerator).collect(Collectors.toList());
         for(Envelope envelope : envelopes )
         {
-            if(envelope.hasGherkinDocument() && envelope.getGherkinDocument().hasFeature())
+            if(envelope.gherkinDocument && envelope.gherkinDocument.feature)
             {
                 loadedFeatures.add(envelope.getGherkinDocument().getFeature());
             }
@@ -144,7 +144,7 @@ Then her todo list should contain Walk the dog    {result:Filtering things I nee
         given:
         CucumberParser parser = new CucumberParser()
         when:
-            def narrative = parser.loadFeatureNarrative(new File(featureFile))
+            def narrative = parser.loadFeatureDefinition(new File(featureFile))
         then:
             narrative.isPresent()
     }

@@ -11,7 +11,7 @@ import java.util.List;
 import static com.google.common.collect.Lists.newArrayList;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.*;
 
 public class CucumberScenarioLoaderTest {
 
@@ -80,6 +80,17 @@ public class CucumberScenarioLoaderTest {
         for (int i = 0; i < jvm1Slices.size(); i++) {
             assertThat(jvm1Slices.get(i).scenarios, contains(buildMatchingCucumberScenario(jvm2Slices.get(i))));
         }
+    }
+
+    @Test
+    public void shouldCorrectlyParseAllTags() throws Exception {
+        WeightedCucumberScenarios weightedCucumberScenarios = new CucumberScenarioLoader(newArrayList(new URI("classpath:samples/jira_issue.feature")), testStatistics).load();
+
+        assertThat(weightedCucumberScenarios.scenarios, contains(MatchingCucumberScenario.with()
+                .featurePath("jira_issue.feature")
+                .feature("Basic Arithmetic")
+                .scenario("Addition")
+                .tags("@issues:ISSUE-456,ISSUE-001", "@issues:ISSUE-123,ISSUE-789", "@foo")));
     }
 
     private MatchingCucumberScenario[] buildMatchingCucumberScenario(WeightedCucumberScenarios weightedCucumberScenarios) {

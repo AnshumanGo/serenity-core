@@ -5,7 +5,7 @@
     <parent>
         <artifactId>serenity-bdd</artifactId>
         <groupId>net.serenity-bdd</groupId>
-        <version>3.0.6-SNAPSHOT</version>
+        <version>3.2.6-SNAPSHOT</version>
     </parent>
     <artifactId>serenity-model</artifactId>
     <packaging>jar</packaging>
@@ -149,13 +149,11 @@
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.reflections/reflections -->
         <dependency>
-            <groupId>org.reflections</groupId>
-            <artifactId>reflections</artifactId>
-            <version>0.10.2</version>
+            <groupId>io.github.classgraph</groupId>
+            <artifactId>classgraph</artifactId>
+            <version>4.8.138</version>
         </dependency>
-
         <dependency>
             <groupId>net.sourceforge.jexcelapi</groupId>
             <artifactId>jxl</artifactId>
@@ -168,17 +166,7 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.asciidoctor</groupId>
-            <artifactId>asciidoctorj</artifactId>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.beust</groupId>
-                    <artifactId>jcommander</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>org.codehaus.groovy</groupId>
+            <groupId>org.apache.groovy</groupId>
             <artifactId>groovy</artifactId>
         </dependency>
         <dependency>

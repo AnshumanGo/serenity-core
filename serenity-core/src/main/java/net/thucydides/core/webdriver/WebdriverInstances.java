@@ -68,6 +68,7 @@ public class WebdriverInstances {
             closedDriver = getCurrentDriver();
             closeAndQuit(closedDriver);
             currentDriver = null;
+            clearCurrentActiveDriver();
         }
         return closedDriver;
     }
@@ -105,6 +106,7 @@ public class WebdriverInstances {
         driverMap.clear();
         clearDriversInCurrentThread();
         currentDriver = null;
+        clearCurrentActiveDriver();
         return closedDrivers;
     }
 
@@ -171,10 +173,18 @@ public class WebdriverInstances {
     }
 
     private boolean matchingDriver(WebDriver mappedDriver, WebDriver driver) {
+        //compare using equals assuming both are Webdriver
+
         if (mappedDriver == driver) {
             return true;
         }
 
+        //compare now if mapped is Facade and expedted driver is not
+        if (mappedDriver instanceof WebDriverFacade && !(driver instanceof WebDriverFacade)) {
+            return ((WebDriverFacade) mappedDriver).proxiedWebDriver == driver;
+        }
+
+        //lastly assume driver is facade
         return ((driver instanceof WebDriverFacade) && (mappedDriver == ((WebDriverFacade) driver).proxiedWebDriver));
     }
 
@@ -250,9 +260,18 @@ public class WebdriverInstances {
 
 
         public void forDriver(final WebDriver driver) {
-            if (!driverMap.values().contains(driver)) {
+            boolean alreadyInMap = false;
+            //check if the driver is not already present in driverMap
+            for (WebDriver mappedDriver : driverMap.values()) {
+                alreadyInMap = matchingDriver(mappedDriver, driver);
+                if (alreadyInMap)
+                    break;
+            }
+            //if driver is not present, then add it
+            if (!alreadyInMap) {
                 driverMap.put(driverName, driver);
             }
+
         }
     }
 

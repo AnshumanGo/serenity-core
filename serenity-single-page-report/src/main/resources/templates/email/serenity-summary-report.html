@@ -3,7 +3,7 @@
 <head>
     <meta name="viewport" content="width=device-width">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <title>Serenity BDD Test Results - L1 Controls Navigator</title>
+    <title data-th-text="'Test Report - ' + ${report.title}">Serenity BDD Test Results - L1 Controls Navigator</title>
     <style media="all" type="text/css">/* -------------------------------------
         GLOBAL RESETS
     ------------------------------------- */
@@ -1125,10 +1125,10 @@
                             </table>
                         </td>
                     </tr>
-                    <tr>
+                    <tr th:if="${testFailuresPresent}">
                         <td class="compact-wrapper"><h3>Test Failure Overview</h3></td>
                     </tr>
-                    <tr>
+                    <tr th:if="${testFailuresPresent}">
                         <td class="compact-wrapper">
                             <table>
                                 <tr>
@@ -1171,7 +1171,7 @@
                             </table>
                         </td>
                     </tr>
-                    <tr>
+                    <tr th:if="${testFailuresPresent}">
                         <td class="compact-wrapper">
                             <h3>Full Failure List</h3>
                             <table class="failure-list failure-scoreboard" style="border:1px solid black;">

@@ -138,7 +138,7 @@ public class WebDriverFactory {
             throw toPassThrough;
         } catch (Exception cause) {
             if (shouldRetry(cause)) {
-                LOGGER.info("Waiting to retry: " + cause.getMessage() + ")");
+                LOGGER.debug("Waiting to retry: " + cause.getMessage() + ")");
                 return waitThenRetry(driverClass, options, environmentVariables);
             } else {
                 throw new DriverConfigurationError(
@@ -157,6 +157,11 @@ public class WebDriverFactory {
         WebDriver driver = driverProviders().get(supportedDriverType).newInstance(resolvedOptions, environmentVariables);
         setImplicitTimeoutsIfSpecified(driver);
         redimensionBrowser.withDriver(driver);
+        //
+        // Perform any custom configuration to the new driver
+        //
+        EnhanceDriver.from(environmentVariables).to(driver);
+
         closeBrowser.closeWhenTheTestsAreFinished(driver);
         return driver;
     }
@@ -173,7 +178,7 @@ public class WebDriverFactory {
                                     String options,
                                     EnvironmentVariables environmentVariables,
                                     Exception cause) {
-        LOGGER.info("Remaining tries: " + remainingTries);
+        LOGGER.debug("Remaining tries: " + remainingTries);
 
         if (remainingTries == 0) {
             throw new DriverConfigurationError(

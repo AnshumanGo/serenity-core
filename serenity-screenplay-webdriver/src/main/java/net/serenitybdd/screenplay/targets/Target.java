@@ -1,7 +1,6 @@
 package net.serenitybdd.screenplay.targets;
 
-import net.serenitybdd.core.pages.PageObject;
-import net.serenitybdd.core.pages.WebElementFacade;
+import net.serenitybdd.core.pages.*;
 import net.serenitybdd.screenplay.Actor;
 import net.serenitybdd.screenplay.Question;
 import net.serenitybdd.screenplay.abilities.BrowseTheWeb;
@@ -16,7 +15,7 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class Target {
+public abstract class Target implements ResolvableElement {
 
     protected final String targetElementName;
     protected final Optional<IFrame> iFrame;
@@ -51,14 +50,14 @@ public abstract class Target {
         return resolveFor(currentPageVisibleTo(actor));
     }
 
-    public List<WebElementFacade> resolveAllFor(Actor actor) {
-        return resolveAllFor(currentPageVisibleTo(actor));
+    public ListOfWebElementFacades resolveAllFor(Actor actor) {
+        return new ListOfWebElementFacades(resolveAllFor(currentPageVisibleTo(actor)));
     }
 
     public abstract WebElementFacade resolveFor(PageObject page);
-    public abstract List<WebElementFacade> resolveAllFor(PageObject page);
+    public abstract ListOfWebElementFacades resolveAllFor(PageObject page);
 
-    public abstract Target called(String name);
+    public abstract SearchableTarget called(String name);
 
     public abstract SearchableTarget of(String... parameters);
 
@@ -74,15 +73,22 @@ public abstract class Target {
 
     public abstract Target waitingForNoMoreThan(Duration timeout);
 
-    public Target inside(String locator) {
+    public SearchableTarget inside(String locator) {
         return inside(Target.the("Containing element").locatedBy(locator));
     }
 
-    public Target inside(Target container) {
+    public SearchableTarget inside(Target container) {
         return Target.the(getName()).locatedBy(
                 LocatorStrategies.findNestedElements(container, this)
         );
     }
+
+    public SearchableTarget thenFind(Target nextElement) {
+        return Target.the(getName()).locatedBy(
+                LocatorStrategies.findNestedElements(this, nextElement)
+        );
+    }
+
 
     public abstract List<By> selectors(WebDriver driver);
 
@@ -91,7 +97,7 @@ public abstract class Target {
      */
     public boolean isVisibleFor(Actor actor) {
         List<WebElementFacade> matchingElements = resolveAllFor(actor);
-        return (!matchingElements.isEmpty() && matchingElements.get(0).isCurrentlyVisible());
+        return matchingElements.stream().anyMatch(WebElementState::isCurrentlyVisible);
     }
 
     public <T> Question<T> mapFirst(Function<WebElementFacade, T> transformation) {

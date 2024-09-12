@@ -2,6 +2,7 @@ package net.thucydides.core.steps;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import io.cucumber.core.resource.ClassLoaders;
 import net.serenitybdd.core.Serenity;
 import net.serenitybdd.core.collect.NewList;
 import net.serenitybdd.core.environment.ConfiguredEnvironment;
@@ -17,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -42,7 +44,19 @@ public class StepEventBus {
     private static final ConcurrentMap<Object, StepEventBus> STICKY_EVENT_BUSES = new ConcurrentHashMap<>();
 
     private static final String CORE_THUCYDIDES_PACKAGE = "net.thucydides.core";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(StepEventBus.class);
+    public static final String JUNIT_JUPITER_EXECUTION_PARALLEL_ENABLED = "junit.jupiter.execution.parallel.enabled";
+
+    private static boolean noCleanupForStickyBuses = false;
+
+    private static String JUNIT_CONFIG_FILE_NAME = "junit-platform.properties";
+
+    private static boolean jUnit5ParallelMode = false;
+
+    static {
+        jUnit5ParallelMode =  isJUnit5ParallelMode();
+    }
 
     /**
      * The event bus used to inform listening classes about when tests and test steps start and finish.
@@ -79,6 +93,13 @@ public class StepEventBus {
     }
 
     public static void clearEventBusFor(Object key) {
+        if(noCleanupForStickyBuses) {
+            return;
+        }
+        STICKY_EVENT_BUSES.remove(key);
+    }
+
+    public static void forceClearEventBusFor(Object key) {
         STICKY_EVENT_BUSES.remove(key);
     }
 
@@ -115,6 +136,7 @@ public class StepEventBus {
         this.cleanupMethodLocator = new CleanupMethodLocator();
         this.outputDirectory = configuration.getOutputDirectory();
     }
+
 
     public EnvironmentVariables getEnvironmentVariables() {
         return environmentVariables;
@@ -164,6 +186,7 @@ public class StepEventBus {
         for (StepListener stepListener : getAllListeners()) {
             stepListener.testStarted(testName);
         }
+        StepEventBus.getEventBus().setTestSource(testSource);
         TestLifecycleEvents.postEvent(TestLifecycleEvents.testStarted());
     }
 
@@ -332,9 +355,15 @@ public class StepEventBus {
         return resultTally;
     }
 
+    private void recordTestSource() {
+        TestOutcome outcome = getBaseStepListener().getCurrentTestOutcome();
+        outcome.setTestSource(testSource);
+    }
+
     public void testFinished(boolean inDataDrivenTest) {
         TestOutcome outcome = getBaseStepListener().getCurrentTestOutcome();
         outcome = checkForEmptyScenarioIn(outcome);
+        recordTestSource();
 
         for (StepListener stepListener : getAllListeners()) {
             stepListener.testFinished(outcome, inDataDrivenTest);
@@ -533,15 +562,17 @@ public class StepEventBus {
         driverReenabled = true;
     }
 
-    private boolean inFixureMethod() {
-        boolean activateWebDriverInFixtureMethods = SERENITY_ENABLE_WEBDRIVER_IN_FIXTURE_METHODS.booleanFrom(environmentVariables, true);
+    public boolean inFixtureMethod() {
+        return cleanupMethodLocator.currentMethodWasCalledFromACleanupMethod();
+    }
 
-        return (activateWebDriverInFixtureMethods && cleanupMethodLocator.currentMethodWasCalledFromACleanupMethod());
+    private boolean activateWebDriverInFixtureMethods() {
+        return SERENITY_ENABLE_WEBDRIVER_IN_FIXTURE_METHODS.booleanFrom(environmentVariables, true);
     }
 
     public boolean webdriverCallsAreSuspended() {
 
-        if (driverReenabled || inFixureMethod()) {
+        if (driverReenabled || (inFixtureMethod() && activateWebDriverInFixtureMethods())) {
             return false;
         }
         if (softAssertsActive()) {
@@ -565,6 +596,7 @@ public class StepEventBus {
      */
     public void testFailed(final Throwable cause) {
         TestOutcome outcome = getBaseStepListener().getCurrentTestOutcome();
+        recordTestSource();
         for (StepListener stepListener : getAllListeners()) {
             try {
                 stepListener.testFailed(outcome, cause);
@@ -583,6 +615,7 @@ public class StepEventBus {
             stepListener.testPending();
         }
         suspendTest();
+        recordTestSource();
     }
 
     /**
@@ -614,7 +647,6 @@ public class StepEventBus {
             case ABORTED:
                 testAborted();
         }
-
     }
 
     public void useScenarioOutline(String scenarioOutline) {
@@ -636,6 +668,7 @@ public class StepEventBus {
             stepListener.testIgnored();
         }
         suspendTest();
+        recordTestSource();
     }
 
     public void testSkipped() {
@@ -643,6 +676,7 @@ public class StepEventBus {
             stepListener.testSkipped();
         }
         suspendTest();
+        recordTestSource();
     }
 
     public void testAborted() {
@@ -650,6 +684,7 @@ public class StepEventBus {
             stepListener.testAborted();
         }
         suspendTest();
+        recordTestSource();
     }
 
     public boolean areStepsRunning() {
@@ -941,7 +976,12 @@ public class StepEventBus {
     }
 
     public boolean isASingleBrowserScenario() {
-        return uniqueSession || currentTestHasTag(TestTag.withValue("singlebrowser"));
+        if(jUnit5ParallelMode) {
+            return false;
+        }
+        return uniqueSession
+                || currentTestHasTag(TestTag.withValue("singlebrowser"))
+                || getBaseStepListener().currentStoryHasTag(TestTag.withValue("singlebrowser"));
     }
 
     public boolean isNewSingleBrowserScenario() {
@@ -954,6 +994,36 @@ public class StepEventBus {
         } else {
             return false;
         }
+    }
+
+    private static boolean isJUnit5ParallelMode() {
+        Properties junitProperties = fromClasspathResource(JUNIT_CONFIG_FILE_NAME);
+        if(junitProperties.size() > 0) {
+            return junitProperties.getProperty(JUNIT_JUPITER_EXECUTION_PARALLEL_ENABLED, "false").equalsIgnoreCase("true");
+        } else {
+            return System.getProperty("junit.jupiter.execution.parallel.enabled", "false").equalsIgnoreCase("true");
+        }
+    }
+
+    private static Properties fromClasspathResource(String configFileName) {
+		Properties props = new Properties();
+		try {
+			InputStream inputStream = ClassLoaders.getDefaultClassLoader().getResourceAsStream(configFileName);
+			if (inputStream != null) {
+				LOGGER.info(String.format(
+					"Loading JUnit Platform configuration parameters from classpath resource [%s].", configFileName));
+				props.load(inputStream);
+			}
+		}
+		catch (Exception ex) {
+			LOGGER.info(String.format("Failed to load JUnit Platform configuration parameters from classpath resource [%s].", configFileName));
+		}
+
+		return props;
+	}
+
+    public static void setNoCleanupForStickyBuses(boolean noCleanup) {
+        noCleanupForStickyBuses = noCleanup;
     }
 
 }

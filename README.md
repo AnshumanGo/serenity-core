@@ -4,6 +4,8 @@
 
 [![Gitter](https://badges.gitter.im/serenity-bdd/serenity-core.svg)](https://gitter.im/serenity-bdd/serenity-core?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 ![Continuous Integration](https://github.com/serenity-bdd/serenity-core/workflows/Continuous%20Integration/badge.svg)
+[![javadoc](https://javadoc.io/badge2/net.serenity-bdd/serenity-core/javadoc.svg)](https://javadoc.io/doc/net.serenity-bdd/serenity-core)
+
 
 ### That feeling you get when you know you can trust your tests
 
@@ -47,17 +49,34 @@ And if you drill into the details, Serenity will give you a detailed account of 
 
 ![Serenity Test Details](docs/serenity-details.png "Logo Title Text 1")
 
+## Found a bug?
+You can raise a defect here. Note that this is an open source project, so **the fastest way to fix an issue is to fix it yourself and to propose a pull request**. As with any open source project, support is never free - it is just payed for from a volunteer's spare time or through a sponsoring organisation.
+    
+Some companies and individuals who find that Serenity BDD helps in their daily work choose to give back by sponsoring the project in different capacities. Bug fixes or change requests coming from sponsors are generally prioritised over other requests. 
 
+**You can help out by sponsoring Serenity BDD directly here:
+[:heart: Sponsor](https://github.com/sponsors/serenity-bdd)**
+
+Take a look at [this article](https://opensource.guide/how-to-contribute/#communicating-effectively) for more information.
+
+## Need Commercial Support?
+    
+If you are using Serenity for your company projects, and need faster or more in-depth support, including training and coaching, why not ask your company to get some [commercial support](https://by2kx88fp4k.typeform.com/to/X8sN33jP)? We provide a range of support options including prioritied tickets, custom Serenity work, and remote mentoring/pair programming sessions, depending on your needs, so let's chat!
+  
 ## Where can I learn more?
 
 Check out Serenity BDD in more detail here:
 * [User Guide](https://serenity-bdd.github.io/theserenitybook/latest/index.html)
 * [![Javadocs](https://www.javadoc.io/badge/net.serenity-bdd/serenity-core.svg)](https://www.javadoc.io/doc/net.serenity-bdd/serenity-core)
 * [The Serenity BDD Web Site](http://serenity-bdd.info)
-* NEW: **[Testing Web Applications With Serenity BDD And Selenium - Online Training Course](https://www.udemy.com/course/serenity-bdd-web-testing/?referralCode=3E5878CF6F4676EF507B)**
+* **[The Serenity Dojo Training Library](https://expansion.serenity-dojo.com/)** which includes a comprehensive range of free tutorials and more in depth courses on Serenity BDD.
+* [**Introductory Course**: Effective UI Test Automation With Serenity BDD and Selenium](https://expansion.serenity-dojo.com/courses/testing-web-applications-with-serenity-bdd)
+* [**Master The Serenity Screenplay Pattern**: Next-generation Automated Acceptance Tests With Serenity Screenplay](https://expansion.serenity-dojo.com/courses/writing-more-sustainable-tests-with-the-screenplay-pattern)
     
 ## Release Notes
 Release notes are available for major releases:
+* [3.2.4](docs/release-notes/3.2.4.md)
+* [3.2.0](docs/release-notes/3.2.0.md)
 * [2.3.2](docs/release-notes/2.3.2.md)
 * [2.2.0](docs/release-notes/2.2.0.md)
 * [2.1.5](docs/release-notes/2.1.5.md)
@@ -70,37 +89,47 @@ The tables below list the latest stable and tested versions of Serenity BDD and 
 
 ### Serenity with JUnit
 
-| serenity-core | serenity-maven-plugin | Selenium version  |  RestAssured version | Appium client version |
-|---------------|-----------------------|-------------------|----------------------|-----------------------|
-| 2.5.8         | 2.5.8                 | 3.141.59          | 4.3.3                | 7.5.1                 |
-| 2.5.7         | 2.5.7                 | 3.141.59          | 4.3.3                | 7.5.1                 |
-| 2.4.51        | 2.4.51                | 3.141.59          | 4.3.3                | 7.5.1                 |
-| 2.4.34        | 2.4.34                | 3.141.59          | 4.3.3                | 7.5.1                 |
-| 2.4.24        | 2.4.24                | 3.141.59          | 4.3.3                | 7.5.1                 |
-| 2.3.12        | 2.3.12                | 3.141.59          | 4.3.2                | 7.3.0                 |
-| 2.3.5         | 2.3.5                 | 3.141.59          | 4.3.1                | 7.3.0                 |
-| 2.3.4         | 2.3.4                 | 3.141.59          | 3.3.0                | 7.2.0                 |
-| 2.2.12        | 2.2.12                | 3.141.59          | 3.3.0                | 7.2.0                 |
-| 2.2.5         | 2.2.5                 | 3.141.59          | 3.3.0                | 7.2.0                 |
-| 2.2.2         | 2.2.2                 | 3.141.59          | 3.3.0                | 7.2.0                 |
-| 2.2.0         | 2.2.0                 | 3.141.59          | 3.3.0                | 7.2.0                 |
-| 2.1.5         | 2.1.5                 | 3.141.59          | 3.3.0                | 7.2.0                 |
-| 2.1.0         | 2.1.0                 | 3.141.59          | 3.3.0                | 7.2.0                 |
-| 2.0.90        | 2.0.90                | 3.141.59          | 3.3.0                | 7.2.0                 |
-| 2.0.84        | 2.0.84                | 3.141.59          | 3.3.0                | 7.2.0                 |
-| 2.0.71        | 2.0.71                | 3.141.59          | 3.3.0                | 7.2.0                 |
-| 2.0.69        | 2.0.69                | 3.141.59          | 3.3.0                | 7.0.0                 |
-| 2.0.56        | 2.0.56                | 3.141.59          | 3.3.0                | 7.0.0                 |
-| 2.0.52        | 2.0.52                | 3.141.59          | 3.3.0                | 7.0.0                 |
-| 2.0.48        | 2.0.48                | 3.141.59          | 3.3.0                | 7.0.0                 |
+| serenity-core | serenity-maven-plugin | Selenium version |  RestAssured version | Appium client version |
+|---------------|-----------------------|------------------|----------------------|-----------------------|
+| 3.2.4         | 3.2.4                 | 4.1.3            | 5.0.1                | 8.0.0                 |
+| 3.2.2         | 3.2.2                 | 4.1.2            | 4.5.1                | 8.0.0                 |
+| 3.1.15        | 3.1.15                | 4.1.1            | 4.4.0                | 8.0.0-BETA            |
+| 3.1.1         | 3.1.1                 | 4.0.0            | 4.3.3                | 8.0.0-BETA            |
+| 3.0.5         | 3.0.5                 | 3.141.59         | 4.3.3                | 7.5.1                 |
+| 2.5.8         | 2.5.8                 | 3.141.59         | 4.3.3                | 7.5.1                 |
+| 2.5.7         | 2.5.7                 | 3.141.59         | 4.3.3                | 7.5.1                 |
+| 2.4.51        | 2.4.51                | 3.141.59         | 4.3.3                | 7.5.1                 |
+| 2.4.34        | 2.4.34                | 3.141.59         | 4.3.3                | 7.5.1                 |
+| 2.4.24        | 2.4.24                | 3.141.59         | 4.3.3                | 7.5.1                 |
+| 2.3.12        | 2.3.12                | 3.141.59         | 4.3.2                | 7.3.0                 |
+| 2.3.5         | 2.3.5                 | 3.141.59         | 4.3.1                | 7.3.0                 |
+| 2.3.4         | 2.3.4                 | 3.141.59         | 3.3.0                | 7.2.0                 |
+| 2.2.12        | 2.2.12                | 3.141.59         | 3.3.0                | 7.2.0                 |
+| 2.2.5         | 2.2.5                 | 3.141.59         | 3.3.0                | 7.2.0                 |
+| 2.2.2         | 2.2.2                 | 3.141.59         | 3.3.0                | 7.2.0                 |
+| 2.2.0         | 2.2.0                 | 3.141.59         | 3.3.0                | 7.2.0                 |
+| 2.1.5         | 2.1.5                 | 3.141.59         | 3.3.0                | 7.2.0                 |
+| 2.1.0         | 2.1.0                 | 3.141.59         | 3.3.0                | 7.2.0                 |
+| 2.0.90        | 2.0.90                | 3.141.59         | 3.3.0                | 7.2.0                 |
+| 2.0.84        | 2.0.84                | 3.141.59         | 3.3.0                | 7.2.0                 |
+| 2.0.71        | 2.0.71                | 3.141.59         | 3.3.0                | 7.2.0                 |
+| 2.0.69        | 2.0.69                | 3.141.59         | 3.3.0                | 7.0.0                 |
+| 2.0.56        | 2.0.56                | 3.141.59         | 3.3.0                | 7.0.0                 |
+| 2.0.52        | 2.0.52                | 3.141.59         | 3.3.0                | 7.0.0                 |
+| 2.0.48        | 2.0.48                | 3.141.59         | 3.3.0                | 7.0.0                 |
 
 Sample project: [Serenity JUnit Starter Project](https://github.com/serenity-bdd/serenity-junit-starter).
 
-### Serenity with Cucumber
-From version 2.3.x we will be supporting Cucumber 6 only.
-
+#### Cucumber 7 (Serenity 3.1.15 onwards)
+| serenity-core | serenity-maven-plugin | serenity-cucumber | Cucumber |
+|---------------|----------------------|--------------------|----------|
+| 3.2.4         | 3.2.4                | 3.2.4              | 7.2.3    |
+| 3.1.20        | 3.1.20               | 3.1.20             | 7.1.1    |
+| 3.1.15        | 3.1.15               | 3.1.15             | 7.0.0    |
+   
 #### Cucumber 6
-
+  _Note:_ Cucumber 6 is no longer supported in newer versions of Serenity.
+  
 | serenity-core | serenity-maven-plugin | serenity-cucumber6 | Cucumber            |
 |---------------|-----------------------|--------------------|---------------------|
 | 2.5.8         | 2.5.8                 |  2.5.8             | 6.10.4              |
@@ -242,12 +271,19 @@ Also, make sure you try with the latest version of Serenity - your bug may alrea
 
 It is easier for us to fix something we can see breaking. If someone has to volunteer an hour of there time to reproduce a defect, Start of with one of the Serenity started projects (like [this one](https://github.com/serenity-bdd/serenity-cucumber-starter) and add a scenario or test case that both illustrates and describes your issue. If possible, write the test to describe the behaviour you expect, so that it fails when the defect is present, and that it will pass when the defect is fixed.
 
-### Submit a Pull Request
+## Found a bug?
+You can raise a defect here. Note that this is an open source project, so **the fastest way to fix an issue is to fix it yourself and to propose a pull request**. As with any open source project, support is never free - it is just payed for from a volunteer's spare time or through a sponsoring organisation.
+    
+Some companies and individuals who find that Serenity BDD helps in their daily work choose to give back by sponsoring the project in different capacities. Bug fixes or change requests coming from sponsors are generally prioritised over other requests. 
 
-The fastest way to fix a defect is often to dig into the code and to submit a pull request.
-
-## Need Commercial Support?
-
-If you are using Serenity for your company projects, and need faster or more in-depth support, why not ask your company to get some [commercial support](https://johnfergusonsmart.com/serenity-bdd/)? We provide a range of support options including prioritied tickets, custom Serenity work, and remote mentoring/pair programming sessions, depending on your needs.
+**NOTE:** From time to time, old issues that have not been active for over 6 months will be automatically closed. If one of these issues affects your project and is still reproducible with the latest version of Serenity, feel free to reopen.
+    
+You can help out by sponsoring Serenity BDD directly here:
+[:heart: Sponsor](https://github.com/sponsors/serenity-bdd)
 
 Take a look at [this article](https://opensource.guide/how-to-contribute/#communicating-effectively) for more information.
+   
+
+## Need Commercial Support?
+    
+If you are using Serenity for your company projects, and need faster or more in-depth support, including training and coaching, why not ask your company to get some [commercial support](https://johnfergusonsmart.com/serenity-bdd/)? We provide a range of support options including prioritied tickets, custom Serenity work, and remote mentoring/pair programming sessions, depending on your needs.

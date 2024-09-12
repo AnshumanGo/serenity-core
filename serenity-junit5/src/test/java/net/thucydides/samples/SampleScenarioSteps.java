@@ -1,34 +1,29 @@
 package net.thucydides.samples;
 
 import net.serenitybdd.core.Serenity;
+import net.serenitybdd.core.steps.UIInteractionSteps;
 import net.thucydides.core.annotations.Pending;
 import net.thucydides.core.annotations.Step;
 import net.thucydides.core.annotations.Steps;
-import net.thucydides.core.pages.Pages;
-import net.thucydides.core.steps.ScenarioSteps;
-import org.junit.Assume;
 import org.junit.Ignore;
 import org.junit.jupiter.api.Assumptions;
-import org.openqa.selenium.ElementNotVisibleException;
+import org.openqa.selenium.ElementNotInteractableException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.ThreadLocalRandom;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.isEmptyString;
-import static org.hamcrest.Matchers.lessThan;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 
 @SuppressWarnings("serial")
-public class SampleScenarioSteps extends ScenarioSteps {
+public class SampleScenarioSteps extends UIInteractionSteps {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SampleScenarioSteps.class);
 
-    public SampleScenarioSteps(Pages pages) {
-        super(pages);
-    }
+//    public SampleScenarioSteps(Pages pages) {
+//        super(pages);
+//    }
 
     @Steps
     public SampleScenarioNestedSteps nestedSteps;
@@ -37,6 +32,16 @@ public class SampleScenarioSteps extends ScenarioSteps {
     public void stepThatSucceeds() {
 
     }
+
+    @Step
+    public void stepWithData(int data) {
+    }
+
+    @Step
+    public void stepThatOpensAPage() {
+        openUrl("https://www.wikipedia.org/");
+    }
+
 
     @Step
     public void stepWithFailedAssumption() {
@@ -55,16 +60,18 @@ public class SampleScenarioSteps extends ScenarioSteps {
         assertThat(indexPage.getTitle(), not(isEmptyString()));
     }
 
+    WikipediaPage wikipediaPage;
+
     @Step
     public void stepThatOpensWikipedia() {
-        WikipediaPage page = pages().get(WikipediaPage.class);
-        page.open();
-        page.getTitle();
+        wikipediaPage.open();
+        wikipediaPage.getTitle();
     }
+
+    IndexPage page;
 
     @Step
     public void anotherStepThatUsesABrowser() {
-        IndexPage page = pages().get(IndexPage.class);
         page.enterValue("some value");
         page.enterValue("some value");
         page.enterValue("some other different value");
@@ -72,7 +79,6 @@ public class SampleScenarioSteps extends ScenarioSteps {
 
     @Step
     public void aStepThatAlsoUsesABrowser() {
-        IndexPage page = pages().get(IndexPage.class);
         page.enterValue("some other value");
         page.enterValue("some other value");
         page.enterValue("some other value");
@@ -166,8 +172,6 @@ public class SampleScenarioSteps extends ScenarioSteps {
 
     }
 
-    IndexPage page;
-
     @Step
     public void failsToFindElement() {
         throw new RuntimeException("Element not found");
@@ -225,7 +229,7 @@ public class SampleScenarioSteps extends ScenarioSteps {
     @Step
     public void data_driven_test_step_that_breaks(String age) {
         if (Integer.parseInt(age) > 35) {
-            throw new ElementNotVisibleException("A webdriver issue");
+            throw new ElementNotInteractableException("A webdriver issue");
         }
     }
 

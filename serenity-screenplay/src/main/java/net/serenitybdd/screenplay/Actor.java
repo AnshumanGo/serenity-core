@@ -4,10 +4,10 @@ import net.serenitybdd.core.PendingStepException;
 import net.serenitybdd.core.Serenity;
 import net.serenitybdd.core.SkipNested;
 import net.serenitybdd.core.eventbus.Broadcaster;
+import net.serenitybdd.core.exceptions.IgnoreStepException;
 import net.serenitybdd.core.parallel.Agent;
 import net.serenitybdd.markers.IsHidden;
 import net.serenitybdd.screenplay.events.*;
-import net.serenitybdd.screenplay.exceptions.IgnoreStepException;
 import net.serenitybdd.screenplay.facts.Fact;
 import net.serenitybdd.screenplay.facts.FactLifecycleListener;
 import net.thucydides.core.annotations.Pending;
@@ -20,6 +20,7 @@ import net.thucydides.core.util.EnvironmentVariables;
 import java.lang.reflect.Method;
 import java.util.*;
 
+import static net.serenitybdd.screenplay.Actor.ErrorHandlingMode.IGNORE_EXCEPTIONS;
 import static net.serenitybdd.screenplay.Actor.ErrorHandlingMode.THROW_EXCEPTION_ON_FAILURE;
 import static net.serenitybdd.screenplay.SilentTasks.isNestedInSilentTask;
 import static net.serenitybdd.screenplay.SilentTasks.isSilent;
@@ -61,8 +62,12 @@ public class Actor implements PerformsTasks, SkipNested, Agent {
         return getNameOrPronoun();
     }
 
+    /**
+     * Create a new actor with a given name.
+     * This actor will have no abilities initially, so you will need to assign some abilities
+     * using the whoCan() method.
+     */
     public static Actor named(String name) {
-        EventBusInterface.castActor(name);
         return new Actor(name);
     }
 
@@ -93,6 +98,9 @@ public class Actor implements PerformsTasks, SkipNested, Agent {
         return this;
     }
 
+    /**
+     * Assign an ability to an actor.
+     */
     public <T extends Ability> Actor whoCan(T doSomething) {
         return can(doSomething);
     }
@@ -182,7 +190,7 @@ public class Actor implements PerformsTasks, SkipNested, Agent {
         THROW_EXCEPTION_ON_FAILURE, IGNORE_EXCEPTIONS
     }
 
-    protected final void attemptsTo(ErrorHandlingMode mode, Performable... tasks) {
+    public final void attemptsTo(ErrorHandlingMode mode, Performable... tasks) {
         beginPerformance();
         for (Performable task : tasks) {
             if (isNestedInSilentTask()) {
@@ -271,6 +279,7 @@ public class Actor implements PerformsTasks, SkipNested, Agent {
 
     private <T extends Performable> void performTask(T todo) {
         if (!StepEventBus.getEventBus().currentTestIsSuspended()) {
+            EventBusInterface.castActor(name);
             todo.performAs(this);
         }
     }
@@ -418,11 +427,12 @@ public class Actor implements PerformsTasks, SkipNested, Agent {
 
     private void endPerformance(ErrorHandlingMode mode) {
         Broadcaster.getEventBus().post(new ActorEndsPerformanceEvent(name));
-        if (mode == THROW_EXCEPTION_ON_FAILURE) {
+        boolean isAFixtureMethod = StepEventBus.getEventBus().inFixtureMethod();
+        if (mode == THROW_EXCEPTION_ON_FAILURE && !isAFixtureMethod) {
             eventBusInterface.failureCause().ifPresent(
                     cause -> {
                         StepEventBus.getEventBus().notifyFailure();
-                        StepEventBus.getEventBus().testFinished(StepEventBus.getEventBus().currentTestOutcomeIsDataDriven());
+                        //StepEventBus.getEventBus().testFinished(StepEventBus.getEventBus().currentTestOutcomeIsDataDriven());
                         if (cause.isCompromised()) {
                             throw cause.asCompromisedException();
                         } else if (cause.isAnError()) {
@@ -449,7 +459,7 @@ public class Actor implements PerformsTasks, SkipNested, Agent {
     private void endConsequenceCheck() {
         consequenceListener.endConsequenceCheck();
         Broadcaster.getEventBus().post(new ActorEndsConsequenceCheckEvent(name));
-        endPerformance();
+        endPerformance(IGNORE_EXCEPTIONS);
     }
 
 

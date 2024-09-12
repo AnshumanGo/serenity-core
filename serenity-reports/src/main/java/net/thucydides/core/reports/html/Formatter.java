@@ -12,8 +12,7 @@ import com.vladsch.flexmark.util.options.MutableDataSet;
 import net.thucydides.core.ThucydidesSystemProperty;
 import net.thucydides.core.guice.Injectors;
 import net.thucydides.core.model.TestOutcome;
-import net.thucydides.core.reports.renderer.AsciidocMarkupRenderer;
-import net.thucydides.core.reports.renderer.MarkupRenderer;
+import net.thucydides.core.model.TestTag;
 import net.thucydides.core.requirements.reports.RenderMarkdown;
 import net.thucydides.core.requirements.reports.RequirementsOutcomes;
 import net.thucydides.core.util.EnvironmentVariables;
@@ -23,6 +22,7 @@ import org.apache.commons.lang3.text.translate.AggregateTranslator;
 import org.apache.commons.lang3.text.translate.CharSequenceTranslator;
 import org.apache.commons.lang3.text.translate.EntityArrays;
 import org.apache.commons.lang3.text.translate.LookupTranslator;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +48,6 @@ public class Formatter {
 
 
     private static final String ELIPSE = "&hellip;";
-    private static final String ASCIIDOC = "asciidoc";
     private static final String MARKDOWN = "markdown";
     private static final String TEXT = "";
     private static final String STANDARD_NEW_LINE = "\n";
@@ -67,7 +66,6 @@ public class Formatter {
     public static String[][] UNICODE_CHARS_ESCAPE = new String[][]{{"\\u", "&#92;"}};
 
     private final EnvironmentVariables environmentVariables;
-    private final MarkupRenderer asciidocRenderer;
     Configuration markdownEncodingConfiguration;
 
     Parser parser;
@@ -76,7 +74,6 @@ public class Formatter {
     @Inject
     public Formatter(EnvironmentVariables environmentVariables) {
         this.environmentVariables = environmentVariables;
-        this.asciidocRenderer = new AsciidocMarkupRenderer(); //Injectors.getInjector().getInstance(Key.get(MarkupRenderer.class, Asciidoc.class));
 
         String encoding = ThucydidesSystemProperty.REPORT_CHARSET.from(environmentVariables, "UTF-8");
         markdownEncodingConfiguration = Configuration.builder().setEncoding(encoding).build();
@@ -98,10 +95,6 @@ public class Formatter {
 
     public Formatter() {
         this(Injectors.getInjector().getProvider(EnvironmentVariables.class).get());
-    }
-
-    public String renderAsciidoc(String text) {
-        return stripNewLines(asciidocRenderer.render(text));
     }
 
     public String renderMarkdown(String text) {
@@ -160,7 +153,6 @@ public class Formatter {
                 .replaceAll("\\t", "");
     }
 
-//    private static final Pattern SIMPLE_HTML_TAG = Pattern.compile("<[/|\\w]*>");
     private static final Pattern SIMPLE_HTML_TAG = Pattern.compile("<\\w*>");
 
     public String renderTitle(String text) {
@@ -168,7 +160,6 @@ public class Formatter {
         Matcher matchingTag = SIMPLE_HTML_TAG.matcher(text);
         while (matchingTag.find()) {
             String tag = matchingTag.group(0);
-//            String htmlCompatibleTag = "&lt;" + tag.substring(1, tag.length() - 1) + "&gt;";
             String htmlCompatibleTag = "&lt;" + tag.substring(1, tag.length() - 1) + "&gt;";
             matchingTag.appendReplacement(renderedTitle, htmlCompatibleTag);
         }
@@ -189,8 +180,6 @@ public class Formatter {
 
         if (isRenderedHtml(text)) {
             return text;
-        } else if (format.equalsIgnoreCase(ASCIIDOC)) {  // Use ASCIIDOC if configured
-            return renderAsciidoc(text.trim());
         } else if (format.equalsIgnoreCase(MARKDOWN) || (MarkdownRendering.configuredIn(environmentVariables).renderMarkdownFor(MarkdownRendering.RenderedElements.narrative))) {
             return renderMarkdown(text.trim());
         } else {
@@ -230,8 +219,8 @@ public class Formatter {
         return wrapTablesInDivs(renderDescription(textWithResults), "example-table-in-scenario");
     }
 
-    private final Pattern RESULT_TOKEN = Pattern.compile("\\{result:(.*)!(.*)}'?");
-    private final Pattern EXAMPLE_RESULT_TOKEN = Pattern.compile("\\{example-result:(.*)\\[(\\d*)]}'?");
+    private static final Pattern RESULT_TOKEN = Pattern.compile("\\{result:(.*)!(.*)}'?");
+    private static final Pattern EXAMPLE_RESULT_TOKEN = Pattern.compile("\\{example-result:(.*)\\[(\\d*)]}'?");
 
     private String textWithEmbeddedResults(String text, RequirementsOutcomes requirementsOutcomes) {
 
@@ -278,21 +267,16 @@ public class Formatter {
 
         StringBuffer newText = new StringBuffer();
         Matcher matcher = EXAMPLE_RESULT_TOKEN.matcher(text);
+        int currentRow = 0;
         while (matcher.find()) {
             String feature = matcher.group(1);
             int exampleLineNumber = Integer.parseInt(matcher.group(2));
 
-            Optional<? extends TestOutcome> rowOutome = requirementsOutcomes
-                    .getTestOutcomes()
-                    .getOutcomes()
-                    .stream()
-                    .filter(
-                            outcome -> outcome.getUserStory().getName().equalsIgnoreCase(feature) && containsMatchingExampleRow(outcome, exampleLineNumber)
-                    ).findFirst();
+            Optional<? extends TestOutcome> rowOutome = findMatchingDataDrivenTestOutcome(requirementsOutcomes, feature, exampleLineNumber);
 
             if (rowOutome.isPresent()) {
                 TestOutcome testOutcome = rowOutome.get();
-                Optional<Integer> matchingRow = testOutcome.getDataTable().getResultRowWithLineNumber(exampleLineNumber);
+                Optional<Integer> matchingRow = getMatchingRowNumber(exampleLineNumber, testOutcome, currentRow);
                 if (matchingRow.isPresent() && rowIsAvailable(testOutcome, matchingRow.get())) {
                     matcher.appendReplacement(newText,
                             resultIconFormatter.forResult(testOutcome.getTestSteps().get(matchingRow.get()).getResult(),
@@ -303,9 +287,29 @@ public class Formatter {
             } else {
                 matcher.appendReplacement(newText, "&nbsp;");
             }
+            currentRow++;
         }
         matcher.appendTail(newText);
         return newText.toString();
+    }
+
+    private Optional<Integer> getMatchingRowNumber(int exampleLineNumber, TestOutcome testOutcome, int currentRow) {
+        if (testOutcome.isAJUnit5Test()) {
+            return Optional.of(currentRow);
+        } else {
+            return testOutcome.getDataTable().getResultRowWithLineNumber(exampleLineNumber);
+        }
+    }
+
+    @NotNull
+    private Optional<? extends TestOutcome> findMatchingDataDrivenTestOutcome(RequirementsOutcomes requirementsOutcomes, String feature, int exampleLineNumber) {
+        return requirementsOutcomes
+                .getTestOutcomes()
+                .getOutcomes()
+                .stream()
+                .filter(
+                        outcome -> outcome.getUserStory().getName().equalsIgnoreCase(feature) && containsMatchingExampleRow(outcome, exampleLineNumber)
+                ).findFirst();
     }
 
     private boolean rowIsAvailable(TestOutcome testOutcome, Integer row) {
@@ -313,8 +317,14 @@ public class Formatter {
     }
 
     private boolean containsMatchingExampleRow(TestOutcome outcome, int exampleLineNumber) {
-        return outcome.isDataDriven()
-                && outcome.getTestSteps().stream().anyMatch(testStep -> testStep.correspondsToLine(exampleLineNumber));
+        if (!outcome.isDataDriven()) {
+            return false;
+        }
+        if (outcome.isAJUnit5Test()) {
+            return (outcome.getTestSteps().size() > exampleLineNumber);
+        } else {
+            return outcome.getTestSteps().stream().anyMatch(testStep -> testStep.correspondsToLine(exampleLineNumber));
+        }
     }
 
     private boolean isRenderedHtml(String text) {
@@ -434,6 +444,22 @@ public class Formatter {
         return plainHtmlCompatible(fieldValue);
     }
 
+    public String tagLabel(TestTag tag) {
+        String tagName = htmlCompatible(tag.getName());
+        if (!tag.equalsIgnoreCase("tag")) {
+            return tagName + " (" + tag.getType() + ")";
+        } else {
+            return tagName;
+        }
+    }
+
+    public String javascriptCompatible(Object value) {
+        return value.toString()
+                .replace("\\", "\\\\")
+                .replace("'", "\\'")
+                .replace("\"", "\\\"");
+    }
+
     public String messageBody(String message) {
         return renderText(message.trim());
     }
@@ -444,8 +470,6 @@ public class Formatter {
 
     public String htmlCompatibleStoryTitle(Object fieldValue) {
         String firstLine = fieldValue.toString().split("\\n")[0];
-
-        String htmlCompatibleFirstLine = BASIC_XML.translate(stringFormOf(firstLine));
 
         return (MarkdownRendering.configuredIn(environmentVariables).renderMarkdownFor(MarkdownRendering.RenderedElements.story)) ?
                 (htmlCompatible(renderMarkdown(firstLine))) : htmlCompatible(firstLine);

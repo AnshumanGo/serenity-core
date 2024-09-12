@@ -12,30 +12,34 @@ import static net.thucydides.core.ThucydidesSystemProperty.REPORT_THREADS;
 
 public class NumberOfThreads {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(NumberOfThreads.class);
-
-    static final Double DEFAULT_BLOCKING_COEFFICIENT_FOR_IO = 0.8;
+    static final Double DEFAULT_BLOCKING_COEFFICIENT_FOR_IO = -1.0;
 
     private final EnvironmentVariables environmentVariables;
     private final double blockingCoefficientForIO;
+    private final ReporterRuntime reporterRuntime;
 
     public static int forIOOperations() {
         return new NumberOfThreads().forIO();
     }
 
     protected NumberOfThreads() {
-        this(Injectors.getInjector().getInstance(EnvironmentVariables.class));
+        this(Injectors.getInjector().getInstance(EnvironmentVariables.class), new SystemReporterRuntime());
     }
 
     protected NumberOfThreads(EnvironmentVariables environmentVariables) {
+        this(environmentVariables, new SystemReporterRuntime());
+    }
+
+    protected NumberOfThreads(EnvironmentVariables environmentVariables, ReporterRuntime reporterRuntime) {
         this.environmentVariables = environmentVariables;
         this.blockingCoefficientForIO = Double.parseDouble(IO_BLOCKING_COEFFICIENT.from(environmentVariables, DEFAULT_BLOCKING_COEFFICIENT_FOR_IO.toString()));
+        this.reporterRuntime = reporterRuntime;
     }
 
     public int forIO() {
-        final int numberOfCores = Runtime.getRuntime().availableProcessors();
-        int reportThreads = configuredReportThreads().orElse((int) (numberOfCores / (1 - blockingCoefficientForIO)));
-        return reportThreads;
+        final int numberOfCores = reporterRuntime.availableProcessors();
+        final int calculatedReportThreads = Math.max(1, (int) ((numberOfCores * 1.0) / (1.0 - blockingCoefficientForIO)));
+        return configuredReportThreads().orElse(calculatedReportThreads);
     }
 
     private Optional<Integer> configuredReportThreads() {

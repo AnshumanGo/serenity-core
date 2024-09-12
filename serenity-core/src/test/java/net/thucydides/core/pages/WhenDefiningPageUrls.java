@@ -88,6 +88,18 @@ public class WhenDefiningPageUrls {
         verify(webdriver).get("http://my.application.com/#Showcase");
     }
 
+
+    @Test
+    public void the_default_url_notation_should_work_with_page_objects_with_defined_paths() {
+        PageObject page = new PageObjectWithHashNotation(webdriver);
+        PageUrls pageUrls = new PageUrls(page, configuration);
+        page.setPageUrls(pageUrls);
+        page.setDefaultBaseUrl("http://my.application.com");
+        page.open();
+
+        verify(webdriver).get("http://my.application.com/#Showcase");
+    }
+
     @Test
     public void the_url_should_use_the_annotation_url_if_the_base_url_is_empty() {
         PageObject page = new PageObjectWithHashNotation(webdriver);
@@ -414,6 +426,39 @@ public class WhenDefiningPageUrls {
         page.open("open.issue", withParameters("ISSUE-1"));
 
         verify(webdriver).get("http://myapp.mycompany.com/issues/ISSUE-1");
+    }
+
+    @DefaultUrl("/index.php?param={1}")
+    final class PageObjectWithParameterizedDefaultUrl extends PageObject {
+        public PageObjectWithParameterizedDefaultUrl(WebDriver driver) {
+            super(driver);
+        }
+    }
+
+    @Test
+    public void the_default_url_should_be_added_to_the_base_url() {
+        PageObject page = new PageObjectWithParameterizedDefaultUrl(webdriver);
+        PageUrls pageUrls = new PageUrls(page, configuration);
+        page.setPageUrls(pageUrls);
+
+        configuration.setDefaultBaseUrl("http://my.site");
+
+        page.open(withParameters("39"));
+
+        verify(webdriver).get("http://my.site/index.php?param=39");
+    }
+
+    @Test
+    public void the_default_url_should_be_added_to_the_base_url_including_parameters() {
+        PageObject page = new PageObjectWithParameterizedDefaultUrl(webdriver);
+        PageUrls pageUrls = new PageUrls(page, configuration);
+        page.setPageUrls(pageUrls);
+
+        configuration.setDefaultBaseUrl("http://my.site/base/url");
+
+        page.open(withParameters("39"));
+
+        verify(webdriver).get("http://my.site/base/url/index.php?param=39");
     }
 
     @NamedUrls(

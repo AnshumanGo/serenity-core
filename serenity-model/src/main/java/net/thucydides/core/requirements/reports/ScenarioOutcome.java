@@ -1,14 +1,14 @@
 package net.thucydides.core.requirements.reports;
 
+import net.thucydides.core.model.ExternalLink;
 import net.thucydides.core.model.Rule;
 import net.thucydides.core.model.TestResult;
 import net.thucydides.core.model.TestTag;
+import net.thucydides.core.reports.html.TagFilter;
+import net.thucydides.core.requirements.model.Requirement;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public interface ScenarioOutcome {
 
@@ -62,5 +62,14 @@ public interface ScenarioOutcome {
 
     Rule getRule();
 
+    ExternalLink getExternalLink();
+
+    Collection<TestTag> getScenarioTags();
+
     default boolean isBackground() { return "background".equalsIgnoreCase(getType());};
+
+    default List<TestTag> getFilteredTags() {
+        TagFilter tagFilter = new TagFilter();
+        return new ArrayList<>(tagFilter.removeHiddenTagsFrom(getTags()));
+    }
 }

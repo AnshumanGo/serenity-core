@@ -19,6 +19,11 @@ public class WebElementFacadeStub implements WebElementFacade, WebElementState {
     }
 
     @Override
+    public ListOfWebElementFacades findNestedElementsMatching(ResolvableElement nestedElement) {
+        return new ListOfWebElementFacades(new ArrayList<>());
+    }
+
+    @Override
     public WebElementFacade then(String xpathOrCssSelector) {
         return this;
     }
@@ -232,6 +237,11 @@ public class WebElementFacadeStub implements WebElementFacade, WebElementState {
     }
 
     @Override
+    public List<String> getSelectOptionValues() {
+        return new ArrayList<>();
+    }
+
+    @Override
     public String getFirstSelectedOptionVisibleText() {
         return null;
     }
@@ -413,6 +423,16 @@ public class WebElementFacadeStub implements WebElementFacade, WebElementState {
     }
 
     @Override
+    public WebElementState shouldBeSelected() {
+        return this;
+    }
+
+    @Override
+    public WebElementState shouldNotBeSelected() {
+        return this;
+    }
+
+    @Override
     public WebElementFacade waitUntilVisible() {
         return this;
     }
@@ -506,6 +526,16 @@ public class WebElementFacadeStub implements WebElementFacade, WebElementState {
 
     @Override
     public void click(ClickStrategy clickStrategy) {}
+
+    @Override
+    public void doubleClick() {
+
+    }
+
+    @Override
+    public void contextClick() {
+
+    }
 
     @Override
     public void clear() {

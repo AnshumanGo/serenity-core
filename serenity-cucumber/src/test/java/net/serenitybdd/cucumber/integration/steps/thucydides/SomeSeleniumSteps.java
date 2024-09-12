@@ -8,7 +8,7 @@ import net.thucydides.core.annotations.ManagedPages;
 import net.thucydides.core.annotations.Steps;
 import net.thucydides.core.pages.Pages;
 import net.thucydides.core.webdriver.WebDriverFacade;
-import org.openqa.selenium.ElementNotVisibleException;
+import org.openqa.selenium.ElementNotInteractableException;
 import org.openqa.selenium.WebDriver;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -50,10 +50,19 @@ public class SomeSeleniumSteps {
         assertThat(pages, is(notNullValue()));
     }
 
+
+
+   /* @When("I type in the first name <firstname>")
+    public void whenITypeInTheFirstName(String firstname) {
+        the_user.enters_the_first_name(firstname);
+    }*/
+
     @When("I type in the last name <lastname>")
     public void whenITypeInTheLastName(String lastname) {
         the_user.enters_the_last_name(lastname);
     }
+
+
 
     @Then("I should see first name $expectedFirstname on the screen")
     public void thenIShouldSeeFirstNameOnTheScreen(String $expectedFirstname) {
@@ -72,8 +81,11 @@ public class SomeSeleniumSteps {
 
     @Given("the scenario throws an exception")
     public void throwAnException() {
-        throw new ElementNotVisibleException("Oops");
+        throw new ElementNotInteractableException("Oops");
     }
+
+
+    //Cucumber
 
     @Given("^I am on the test page$")
     public void givenIAmOnTheTestPage() {

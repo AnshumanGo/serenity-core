@@ -1,29 +1,38 @@
 package net.thucydides.core.model;
 
-import io.cucumber.messages.Messages;
+import io.cucumber.messages.types.RuleChild;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class Rule {
 
     private String name;
     private String description;
-    private RuleBackground background;
+    private final RuleBackground background;
+    private final List<TestTag> tags;
 
-    public Rule(String name, String description, RuleBackground background) {
+    public Rule(String name, String description, List<TestTag> tags, RuleBackground background) {
         this.name = name;
         this.description = description;
         this.background = background;
+        this.tags = tags;
     }
 
-    public static Rule from(Messages.GherkinDocument.Feature.FeatureChild.Rule cucumberRule) {
+    public static Rule from(io.cucumber.messages.types.Rule cucumberRule) {
         String name = cucumberRule.getName();
         String description = cucumberRule.getDescription();
-        RuleBackground ruleBackground = cucumberRule.getChildrenList().stream()
-                .filter(ruleChild -> ruleChild.hasBackground())
-                .map(ruleChild -> ruleChild.getBackground())
-                .map(background -> RuleBackground.from(background))
+        RuleBackground ruleBackground = cucumberRule.getChildren().stream()
+                .map(RuleChild::getBackground)
+                .filter(Objects::nonNull)
+                .map(RuleBackground::from)
                 .findFirst().orElse(null);
 
-        return new Rule(name, description, ruleBackground);
+        List<TestTag> tags = cucumberRule.getTags()
+                                         .stream()
+                                         .map(tag -> TestTag.withValue(tag.getName())).collect(Collectors.toList());
+        return new Rule(name, description, tags, ruleBackground);
     }
 
     public String getName() {
@@ -61,5 +70,9 @@ public class Rule {
     @Override
     public int hashCode() {
         return name.hashCode();
+    }
+
+    public List<TestTag> getTags() {
+        return tags;
     }
 }

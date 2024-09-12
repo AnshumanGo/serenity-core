@@ -7,7 +7,6 @@ import net.thucydides.core.steps.StepEventBus;
 import net.thucydides.core.util.EnvironmentVariables;
 import net.thucydides.core.webdriver.capabilities.RemoteTestName;
 import net.thucydides.core.webdriver.capabilities.W3CCapabilities;
-import org.jetbrains.annotations.NotNull;
 import org.openqa.selenium.MutableCapabilities;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
@@ -38,7 +37,7 @@ public class SaucelabsRemoteDriverCapabilities {
      * <p>
      * These are added to the 'sauce:options' capability.
      */
-    public DesiredCapabilities getCapabilities(DesiredCapabilities capabilities) {
+    public MutableCapabilities getCapabilities(MutableCapabilities capabilities) {
         MutableCapabilities saucelabsCapabilities = saucelabsCapabilitiesDefinedIn(environmentVariables);
 
         MutableCapabilities w3cCapabilitiesInSaucelabsSection = W3CCapabilities.definedIn(environmentVariables).withPrefix("saucelabs");
@@ -49,12 +48,12 @@ public class SaucelabsRemoteDriverCapabilities {
         configureTestName(saucelabsCapabilities);
 
         capabilities.setCapability("sauce:options", saucelabsCapabilities);
-        capabilities.setJavascriptEnabled(true);
+//        capabilities.setJavascriptEnabled(true);
 
         return capabilities;
     }
 
-    @NotNull
+    
     private MutableCapabilities saucelabsCapabilitiesDefinedIn(EnvironmentVariables environmentVariables) {
         Properties saucelabsProperties = EnvironmentSpecificConfiguration.from(environmentVariables).getPropertiesWithPrefix("saucelabs.");
         MutableCapabilities sauceCaps = new MutableCapabilities();

@@ -4,6 +4,7 @@ import net.thucydides.core.ThucydidesSystemProperty
 import net.thucydides.core.issues.IssueTracking
 import net.thucydides.core.model.ReportType
 import net.thucydides.core.model.SampleTestResults
+import net.thucydides.core.model.TestTagCache
 import net.thucydides.core.reports.TestOutcomes
 import net.thucydides.core.reports.html.ReportNameProvider
 import net.thucydides.core.requirements.reports.MultipleSourceRequirmentsOutcomeFactory
@@ -25,6 +26,7 @@ class WhenCalculatingRequirementTestCoverage extends Specification {
     TagProviderService tagProviderService
     
     def setup() {
+        TestTagCache.clear()
         def vars = new MockEnvironmentVariables()
         vars.setProperty(ThucydidesSystemProperty.THUCYDIDES_ANNOTATED_REQUIREMENTS_DIR.propertyName, ROOT_DIRECTORY)
         requirementsProviders = [new PackageAnnotationBasedTagProvider(vars)]
@@ -47,6 +49,7 @@ class WhenCalculatingRequirementTestCoverage extends Specification {
     def issueTracking = Mock(IssueTracking)
 
 
+
     def "should count the total number of nested requirements"() {
         given: "there are two stories with passing tests in the 'Apples' feature"
             def testOutcomes = TestOutcomes.of(SampleTestResults.withPassingTestForApples())
@@ -58,6 +61,19 @@ class WhenCalculatingRequirementTestCoverage extends Specification {
             def applesFeatureOutcomes = outcomes.requirementOutcomes.find { it.requirement.name == 'Apples'}
         then:
             applesFeatureOutcomes.subrequirements.total == 2
+    }
+
+    def "should show only outcomes containing tests if so configured"() {
+        given: "there are two stories with passing tests in the 'Apples' feature"
+        def testOutcomes = TestOutcomes.of(SampleTestResults.withPassingTestForApples())
+        def environmentVariables = new MockEnvironmentVariables()
+        environmentVariables.setProperty("serenity.report.hide.empty.requirements","true")
+        and: "we read the requirements from the directory structure"
+        RequirementsOutcomeFactory requirmentsOutcomeFactory = new MultipleSourceRequirmentsOutcomeFactory(requirementsProviders,issueTracking, environmentVariables, new ReportNameProvider())
+        when: "we generate the capability outcomes"
+        RequirementsOutcomes outcomes = requirmentsOutcomeFactory.buildRequirementsOutcomesFrom(testOutcomes)
+        then:
+        outcomes.visibleOutcomes.size() == 1
     }
 
     def "should count zero if there are no nested requirements"() {
@@ -109,7 +125,7 @@ class WhenCalculatingRequirementTestCoverage extends Specification {
 
     def "should count the number of nested requirements with no tests"() {
         given: "there are two stories with passing tests in the 'Apples' feature"
-            def testOutcomes = TestOutcomes.of(SampleTestResults.withPassingTestForApplesAndZucchinis())
+            def testOutcomes = TestOutcomes.of(SampleTestResults.withPassingTestForApples())
             def environmentVariables = new MockEnvironmentVariables()
         and: "we read the requirements from the directory structure"
             RequirementsOutcomeFactory requirmentsOutcomeFactory = new MultipleSourceRequirmentsOutcomeFactory(requirementsProviders,issueTracking, environmentVariables, new ReportNameProvider())
@@ -117,7 +133,7 @@ class WhenCalculatingRequirementTestCoverage extends Specification {
             RequirementsOutcomes outcomes = requirmentsOutcomeFactory.buildRequirementsOutcomesFrom(testOutcomes)
             def featureOutcomes = outcomes.requirementOutcomes.find { it.requirement.name == 'Nice zucchinis'}
         then:
-            featureOutcomes.subrequirements.withNoTests() == 1
+            featureOutcomes.subrequirements.withNoTests() == 2
     }
 
 //    def "For leaf requirements we count the number of acceptance criteria"() {

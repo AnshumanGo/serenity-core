@@ -24,9 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -150,19 +148,17 @@ public class HtmlAcceptanceTestReporter extends HtmlReporter implements Acceptan
         }
     }
 
-
     private File generateReportPage(final Map<String, Object> context,
                                       final String template,
                                       final String outputFile) throws IOException {
 
         Stopwatch stopwatch = Stopwatch.started();
 
-        LOGGER.debug("Generating report in {}", outputFile);
+        LOGGER.trace("Generating report in {}", outputFile);
 
         Path outputPath = getOutputDirectory().toPath().resolve(outputFile);
         try(BufferedWriter writer = Files.newBufferedWriter(outputPath, StandardCharsets.UTF_8)) {
             mergeTemplate(template).withContext(context).to(writer);
-            writer.flush();
         }
 
         LOGGER.trace("Generated report {} in {} ms", outputFile, stopwatch.stop());
@@ -181,6 +177,7 @@ public class HtmlAcceptanceTestReporter extends HtmlReporter implements Acceptan
     private void addTestOutcomeToContext(final TestOutcome testOutcome, final Map<String, Object> context) {
         context.put("testOutcome", testOutcome);
         context.put("currentTag", TestTag.EMPTY_TAG);
+        context.put("reportNameInContext", getReportNameProvider());
         context.put("inflection", Inflector.getInstance());
         EnvironmentVariables environmentVariables = Injectors.getInjector().getInstance(EnvironmentVariables.class);
         context.put("tagInflector", new TagInflector(environmentVariables));
@@ -231,7 +228,7 @@ public class HtmlAcceptanceTestReporter extends HtmlReporter implements Acceptan
     private void addFormattersToContext(final Map<String, Object> context) {
         Formatter formatter = new Formatter();
         ReportFormatter reportFormatter = new ReportFormatter();
-        context.put("reportOptions", new ReportOptions(getEnvironmentVariables(), requirementsService));
+        context.put("reportOptions", ReportOptions.forEnvironment(getEnvironmentVariables()));
         context.put("formatter", formatter);
         context.put("reportFormatter", reportFormatter);
         context.put("reportName", new ReportNameProvider(NO_CONTEXT, ReportType.HTML, requirementsService));

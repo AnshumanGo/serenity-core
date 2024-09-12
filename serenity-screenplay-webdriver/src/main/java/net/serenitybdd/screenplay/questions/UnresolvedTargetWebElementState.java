@@ -11,14 +11,22 @@ import java.util.List;
 public class UnresolvedTargetWebElementState implements WebElementState {
 
     private final String name;
+    private String selector = "";
 
     public UnresolvedTargetWebElementState(String name) {
         this.name = name;
     }
 
+    public void setSelector(String selector) {
+        this.selector = selector;
+    }
+
     @Override
     public String toString() {
-        return "not so";
+        if (selector.isEmpty())
+            return name;
+        else
+            return "[" + name + " located with: " + selector + "]";
     }
 
     @Override
@@ -158,6 +166,16 @@ public class UnresolvedTargetWebElementState implements WebElementState {
 
     @Override
     public WebElementState shouldNotBePresent() {
+        return this;
+    }
+
+    @Override
+    public WebElementState shouldBeSelected() {
+        return this;
+    }
+
+    @Override
+    public WebElementState shouldNotBeSelected() {
         return this;
     }
 

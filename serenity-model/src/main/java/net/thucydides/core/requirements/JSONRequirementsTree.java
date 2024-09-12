@@ -1,6 +1,9 @@
 package net.thucydides.core.requirements;
 
 import com.google.gson.Gson;
+import net.serenitybdd.core.environment.EnvironmentSpecificConfiguration;
+import net.thucydides.core.ThucydidesSystemProperty;
+import net.thucydides.core.guice.Injectors;
 import net.thucydides.core.model.TestResult;
 import net.thucydides.core.model.TestResultList;
 import net.thucydides.core.reports.html.ReportNameProvider;
@@ -9,6 +12,7 @@ import net.thucydides.core.requirements.model.Requirement;
 import net.thucydides.core.requirements.reports.RequirementOutcome;
 import net.thucydides.core.requirements.reports.RequirementsOutcomes;
 import net.thucydides.core.requirements.tree.Node;
+import net.thucydides.core.util.EnvironmentVariables;
 import net.thucydides.core.util.Inflector;
 
 import java.util.Arrays;
@@ -20,19 +24,32 @@ public class JSONRequirementsTree {
 
     private final List<Node> nodes;
     private final boolean displayAsParent;
+    private final boolean hideEmptyRequirements;
 
     private JSONRequirementsTree(List<Node> nodes,
                                  boolean displayAsParent) {
+        this.hideEmptyRequirements = EnvironmentSpecificConfiguration.from(Injectors.getInjector().getInstance(EnvironmentVariables.class))
+                .getBooleanProperty(ThucydidesSystemProperty.SERENITY_REPORT_HIDE_EMPTY_REQUIREMENTS, true);
         this.nodes = nodes;
         this.displayAsParent = displayAsParent;
     }
 
     public JSONRequirementsTree(List<Requirement> requirements, RequirementsOutcomes requirementsOutcomes) {
+        hideEmptyRequirements = EnvironmentSpecificConfiguration.from(Injectors.getInjector().getInstance(EnvironmentVariables.class))
+                .getBooleanProperty(ThucydidesSystemProperty.SERENITY_REPORT_HIDE_EMPTY_REQUIREMENTS, true);
         nodes = requirements.stream()
+                .filter(requirement -> shouldShow(requirement, requirementsOutcomes))
                 .map(requirement -> toNode(requirement, requirementsOutcomes))
                 .sorted()
                 .collect(Collectors.toList());
         displayAsParent = false;
+    }
+
+    private boolean shouldShow(Requirement requirement, RequirementsOutcomes requirementsOutcomes) {
+        if (!hideEmptyRequirements) {
+            return true;
+        }
+        return requirementsOutcomes.requirementOutcomeFor(requirement).getTestCount() > 0;
     }
 
     public static JSONRequirementsTree forRequirements(List<Requirement> requirements,
@@ -63,7 +80,7 @@ public class JSONRequirementsTree {
     }
 
     private String countChildRequirementsIn(Requirement requirement) {
-        Inflector inflection = new Inflector();
+        Inflector inflection = Inflector.getInstance();
         return "<span class='feature-count'>"
                 + requirement.getChildren().size() + " "
                 + inflection.of(requirement.getChildren().size()).times(requirement.getChildren().get(0).getType()).inPluralForm().toString()
@@ -71,7 +88,7 @@ public class JSONRequirementsTree {
     }
 
     private String countScenariosIn(Requirement requirement, RequirementsOutcomes requirementsOutcomes) {
-        Inflector inflection = new Inflector();
+        Inflector inflection = Inflector.getInstance();
         int scenarioCount = scenariosUnder(requirement, requirementsOutcomes);
 
         if (scenarioCount == 0) return "";
@@ -83,12 +100,7 @@ public class JSONRequirementsTree {
     }
 
     private int scenariosUnder(Requirement requirement, RequirementsOutcomes requirementsOutcomes) {
-        int scenarioCount = 0;
-        if ((requirementsOutcomes != null) && (requirementsOutcomes.requirementOutcomeFor(requirement) != null)
-                && ((requirementsOutcomes.requirementOutcomeFor(requirement).getTestOutcomes() != null))) {
-            scenarioCount = requirementsOutcomes.requirementOutcomeFor(requirement).getTestOutcomes().getOutcomes().size();
-        }
-        return scenarioCount;
+        return requirementsOutcomes.getTestOutcomes().forRequirement(requirement).getTestCount();
     }
 
     private Optional<TestResult> matchingOutcome(Requirement requirement,
@@ -101,7 +113,7 @@ public class JSONRequirementsTree {
         Optional<RequirementOutcome> matchingOutcome = testOutcomeForRequirement(requirement, requirementsOutcomes);
 
         if (matchingOutcome.isPresent()) {
-            if (matchingOutcome.get().getTestOutcomes().getTotal() == 0) {
+            if (matchingOutcome.get().getTestOutcomes().getTotal() == 0 || (requirement.getScenarioTags().size() > matchingOutcome.get().getTestOutcomes().getTotal())) {
                 return Optional.of(TestResult.PENDING);
             } else if (unimplementedFeaturesExistFor(matchingOutcome.get(), requirementsOutcomes)) {
                 return Optional.of(TestResultList.overallResultFrom(Arrays.asList(TestResult.PENDING, matchingOutcome.get().getTestOutcomes().getResult())));
@@ -125,7 +137,8 @@ public class JSONRequirementsTree {
         }
     }
 
-    private boolean unimplementedFeaturesExistFor(RequirementOutcome matchingOutcome, RequirementsOutcomes requirementsOutcomes) {
+    private boolean unimplementedFeaturesExistFor(RequirementOutcome matchingOutcome, RequirementsOutcomes
+            requirementsOutcomes) {
         return matchingOutcome.getFlattenedRequirements(matchingOutcome.getRequirement())
                 .stream()
                 .anyMatch(requirement -> noTestsExistFor(requirement, requirementsOutcomes));
@@ -144,6 +157,7 @@ public class JSONRequirementsTree {
     public JSONRequirementsTree asAParentRequirement() {
         return new JSONRequirementsTree(nodes, true);
     }
+
     public Boolean isALeafNode() {
         return !displayAsParent && (nodes.size() == 1 && nodes.get(0).getNodes().isEmpty());
     }

@@ -1,6 +1,7 @@
 package net.thucydides.core.requirements.reports;
 
 import net.thucydides.core.digest.Digest;
+import net.thucydides.core.model.ExternalLink;
 import net.thucydides.core.model.Rule;
 import net.thucydides.core.model.TestResult;
 import net.thucydides.core.model.TestTag;
@@ -28,9 +29,10 @@ public class ScenarioSummaryOutcome implements ScenarioOutcome {
     private final Boolean manual;
     private final Set<TestTag> tags;
     private final Map<String, Collection<TestTag>> exampleTags;
-    private Rule rule;
-    private Long duration;
-    private ZonedDateTime startTime;
+    private final Rule rule;
+    private final Long duration;
+    private final ZonedDateTime startTime;
+    private final Collection<TestTag> scenarioTags;
 
     public ScenarioSummaryOutcome(String name,
                                   String type,
@@ -48,7 +50,8 @@ public class ScenarioSummaryOutcome implements ScenarioOutcome {
                                   Map<String, Collection<TestTag>> exampleTags,
                                   Rule rule,
                                   ZonedDateTime startTime,
-                                  Long duration) {
+                                  Long duration,
+                                  Collection<TestTag> scenarioTags) {
         this.name = name;
         this.type = type;
         this.id = Digest.ofTextValue(name);
@@ -67,6 +70,7 @@ public class ScenarioSummaryOutcome implements ScenarioOutcome {
         this.rule = rule;
         this.startTime = startTime;
         this.duration = duration;
+        this.scenarioTags = scenarioTags;
     }
 
     public String toString() {
@@ -170,6 +174,10 @@ public class ScenarioSummaryOutcome implements ScenarioOutcome {
         return tags;
     }
 
+    public Collection<TestTag> getScenarioTags() {
+        return scenarioTags;
+    }
+
     @Override
     public Map<String, Collection<TestTag>> getExampleTags() {
         return exampleTags;
@@ -177,4 +185,9 @@ public class ScenarioSummaryOutcome implements ScenarioOutcome {
 
     @Override
     public Rule getRule() { return rule; }
+
+    @Override
+    public ExternalLink getExternalLink() {
+        return null;
+    }
 }

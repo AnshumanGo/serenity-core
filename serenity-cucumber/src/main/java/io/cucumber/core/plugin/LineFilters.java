@@ -1,19 +1,15 @@
 package io.cucumber.core.plugin;
 
-
-import io.cucumber.messages.Messages.GherkinDocument.Feature.Scenario.Examples;
-import io.cucumber.messages.Messages.GherkinDocument.Feature.TableRow;
-import net.serenitybdd.cucumber.CucumberWithSerenity;
+import io.cucumber.core.options.*;
+import io.cucumber.messages.types.Examples;
+import io.cucumber.messages.types.TableRow;
 
 import java.net.URI;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class LineFilters {
 
-    private Map<URI, Set<Integer>> lineFilters;
+    private final Map<URI, Set<Integer>> lineFilters;
 
     public LineFilters() {
         lineFilters = newLineFilters();
@@ -30,7 +26,8 @@ public class LineFilters {
     }
 
     private Map<URI, Set<Integer>> newLineFilters() {
-        Map<URI, Set<Integer>> lineFiltersFromRuntime = CucumberWithSerenity.currentRuntimeOptions().getLineFilters();
+        RuntimeOptions runtimeOptions = RuntimeOptions.defaultOptions();
+        Map<URI, Set<Integer>> lineFiltersFromRuntime = runtimeOptions.getLineFilters();
         if (lineFiltersFromRuntime == null) {
             return new HashMap<>();
         } else {
@@ -50,9 +47,9 @@ public class LineFilters {
         if (lineFiltersContainFeaturePath(featurePath)) {
             Optional<URI> uriForFeaturePath = getURIForFeaturePath(featurePath);
             return uriForFeaturePath.filter(
-                    uri -> examples.getTableBodyList().stream()
+                    uri -> examples.getTableBody().stream()
                             .anyMatch(
-                                    row -> lineFilters.get(uri).contains(row.getLocation().getLine()))
+                                    row -> lineFilters.get(uri).contains(Math.toIntExact(row.getLocation().getLine())))
             ).isPresent();
         }
         return false;
@@ -64,7 +61,7 @@ public class LineFilters {
         }
         if (lineFiltersContainFeaturePath(featurePath)) {
             Optional<URI> uriForFeaturePath = getURIForFeaturePath(featurePath);
-            return uriForFeaturePath.filter(uri -> lineFilters.get(uri).contains(tableRow.getLocation().getLine())).isPresent();
+            return uriForFeaturePath.filter(uri -> lineFilters.get(uri).contains(Math.toIntExact(tableRow.getLocation().getLine()))).isPresent();
         }
         return false;
     }
@@ -72,4 +69,6 @@ public class LineFilters {
     private boolean lineFiltersContainFeaturePath(URI featurePath) {
         return getURIForFeaturePath(featurePath) != null;
     }
+
+
 }

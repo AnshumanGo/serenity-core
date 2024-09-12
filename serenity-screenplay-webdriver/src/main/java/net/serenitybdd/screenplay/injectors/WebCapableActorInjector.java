@@ -3,6 +3,8 @@ package net.serenitybdd.screenplay.injectors;
 import net.serenitybdd.core.di.DependencyInjector;
 import net.serenitybdd.screenplay.Actor;
 import net.serenitybdd.screenplay.abilities.BrowseTheWeb;
+import net.serenitybdd.screenplay.actors.OnStage;
+import net.serenitybdd.screenplay.actors.OnlineCast;
 import net.serenitybdd.screenplay.annotations.CastMember;
 import net.thucydides.core.annotations.Fields;
 import net.thucydides.core.annotations.Managed;
@@ -28,18 +30,17 @@ public class WebCapableActorInjector implements DependencyInjector {
     }
 
     private void injectActor(Field field, Object object) {
-        CastMember castMember = field.getAnnotation(CastMember.class);
-        String name = castMember.name();
-        String description = castMember.description();
 
-        if (name.isEmpty()) {
-            name = StringUtils.capitalize(field.getName());
+
+        CastMember castMember = field.getAnnotation(CastMember.class);
+        String name = castMember.name().isEmpty() ? StringUtils.capitalize(field.getName()) : castMember.name();
+
+        if (!OnStage.theStageIsSet()) {
+            OnStage.setTheStage(new OnlineCast());
         }
 
-        Actor actor = Actor.named(name)
-                .describedAs(description);
-
         try {
+            Actor actor = OnStage.theActorCalled(name);
             browserFor(object, castMember).ifPresent(
                     browser -> actor.can(BrowseTheWeb.with(browser))
             );

@@ -9,6 +9,8 @@ import net.thucydides.core.util.EnvironmentVariables;
 import net.thucydides.core.webdriver.stubs.*;
 import org.apache.commons.lang3.StringUtils;
 import org.openqa.selenium.*;
+import org.openqa.selenium.devtools.DevTools;
+import org.openqa.selenium.devtools.HasDevTools;
 import org.openqa.selenium.interactions.*;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.slf4j.Logger;
@@ -168,7 +170,7 @@ public class WebDriverFacade implements WebDriver, TakesScreenshot, HasInputDevi
         if (!isEnabled()) {
             return;
         }
-//        openIgnoringHtmlUnitScriptErrors(url);
+
         getProxiedDriver().get(url);
         setTimeouts();
     }
@@ -179,7 +181,7 @@ public class WebDriverFacade implements WebDriver, TakesScreenshot, HasInputDevi
     }
 
     public String getCurrentUrl() {
-        if (!isEnabled()) {
+        if (!isEnabled() || !isInstantiated()) {
             return StringUtils.EMPTY;
         }
 
@@ -187,7 +189,7 @@ public class WebDriverFacade implements WebDriver, TakesScreenshot, HasInputDevi
     }
 
     public String getTitle() {
-        if (!isEnabled()) {
+        if (!isEnabled() || !isInstantiated()) {
             return StringUtils.EMPTY;
         }
 
@@ -196,7 +198,7 @@ public class WebDriverFacade implements WebDriver, TakesScreenshot, HasInputDevi
 
     @Override
     public List<WebElement> findElements(By by) {
-        if (!isEnabled()) {
+        if (!isEnabled() || !isInstantiated()) {
             return Collections.emptyList();
         }
         List<WebElement> elements;
@@ -211,7 +213,7 @@ public class WebDriverFacade implements WebDriver, TakesScreenshot, HasInputDevi
 
     @Override
     public WebElement findElement(By by) {
-        if (!isEnabled()) {
+        if (!isEnabled() || !isInstantiated()) {
             return new WebElementFacadeStub();
         }
 
@@ -227,7 +229,7 @@ public class WebDriverFacade implements WebDriver, TakesScreenshot, HasInputDevi
    }
 
     public String getPageSource() {
-        if (!isEnabled()) {
+        if (!isEnabled() || !isInstantiated()) {
             return StringUtils.EMPTY;
         }
         try {
@@ -293,7 +295,7 @@ public class WebDriverFacade implements WebDriver, TakesScreenshot, HasInputDevi
     }
 
     public Set<String> getWindowHandles() {
-        if (!isEnabled()) {
+        if (!isEnabled() || !isInstantiated()) {
             return new HashSet<>();
         }
 
@@ -301,7 +303,7 @@ public class WebDriverFacade implements WebDriver, TakesScreenshot, HasInputDevi
     }
 
     public String getWindowHandle() {
-        if (!isEnabled()) {
+        if (!isEnabled() || !isInstantiated()) {
             return StringUtils.EMPTY;
         }
 
@@ -309,7 +311,7 @@ public class WebDriverFacade implements WebDriver, TakesScreenshot, HasInputDevi
     }
 
     public TargetLocator switchTo() {
-        if (!isEnabled()) {
+        if (!isEnabled() || !isInstantiated()) {
             return new TargetLocatorStub(this);
         }
 
@@ -350,7 +352,7 @@ public class WebDriverFacade implements WebDriver, TakesScreenshot, HasInputDevi
     }
 
     public Keyboard getKeyboard() {
-        if (!isEnabled()) {
+        if (!isEnabled() || !isInstantiated()) {
             return new KeyboardStub();
         }
 
@@ -358,23 +360,22 @@ public class WebDriverFacade implements WebDriver, TakesScreenshot, HasInputDevi
     }
 
     public Mouse getMouse() {
-        if (!isEnabled()) {
+        if (!isEnabled() || !isInstantiated()) {
             return new MouseStub();
         }
-
 
         return ((HasInputDevices) getProxiedDriver()).getMouse();
     }
 
     public Object executeScript(String script, Object... parameters) {
-        if (!isEnabled()) {
+        if (!isEnabled() || !isInstantiated()) {
             return null;
         }
         return ((JavascriptExecutor) getProxiedDriver()).executeScript(script, parameters);
     }
 
     public Object executeAsyncScript(String script, Object... parameters) {
-        if (!isEnabled()) {
+        if (!isEnabled() || !isInstantiated()) {
             return null;
         }
         return ((JavascriptExecutor) getProxiedDriver()).executeAsyncScript(script, parameters);
@@ -429,4 +430,20 @@ public class WebDriverFacade implements WebDriver, TakesScreenshot, HasInputDevi
         throw new UnsupportedOperationException("Underlying driver does not implement advanced"
                 + " user interactions yet.");
     }
+
+    /**
+     * Check whether the underlying driver supports DevTools
+     * @return
+     */
+    public boolean hasDevTools() {
+        return (getProxiedDriver() instanceof HasDevTools);
+    }
+
+    public DevTools getDevTools() {
+        if (hasDevTools()) {
+            return ((HasDevTools) getProxiedDriver()).getDevTools();
+        }
+        throw new DevToolsNotSupportedException("DevTools not supported for driver " + getProxiedDriver());
+    }
+
 }

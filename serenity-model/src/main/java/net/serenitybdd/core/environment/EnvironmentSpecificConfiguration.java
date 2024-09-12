@@ -4,9 +4,7 @@ import com.google.common.base.Splitter;
 import net.thucydides.core.ThucydidesSystemProperty;
 import net.thucydides.core.util.EnvironmentVariables;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.*;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -50,14 +48,15 @@ public class EnvironmentSpecificConfiguration {
         return Splitter.on(",")
                 .trimResults()
                 .omitEmptyStrings()
-                .splitToList(environmentVariables.getProperty("environment",""));
-    }
-
-    private boolean isEnvironmentSpecific(String key) {
-        return Pattern.compile(ENVIRONMENT_PREFIX).matcher(key).find();
+                .splitToList(environmentVariables.getProperty("environment", ""));
     }
 
     private static final String ENVIRONMENT_PREFIX = "environments\\.([^.]*)\\.";
+    private final Pattern ENV_PREFIX_REGEX = Pattern.compile(ENVIRONMENT_PREFIX);
+
+    private boolean isEnvironmentSpecific(String key) {
+        return ENV_PREFIX_REGEX.matcher(key).find();
+    }
 
     private String stripEnvironmentPrefixFrom(String key) {
         return key.replaceFirst(ENVIRONMENT_PREFIX, "");
@@ -99,7 +98,7 @@ public class EnvironmentSpecificConfiguration {
     private Function<String, String> propertyForADefinedEnvironment = property -> {
         String environmentProperty = null;
 
-        for(String environment : activeEnvironments()) {
+        for (String environment : activeEnvironments()) {
             environmentProperty = override(environmentProperty, environmentVariables.getProperty("environments." + environment + "." + property));
         }
 
@@ -158,11 +157,60 @@ public class EnvironmentSpecificConfiguration {
         return Integer.parseInt(getProperty(propertyName));
     }
 
-    public Optional<String> getOptionalProperty(String... propertyNames) {
+    public boolean getBooleanProperty(final ThucydidesSystemProperty propertyName) {
+        return getBooleanProperty(propertyName, false);
+    }
 
+    public List<String> getListOfValues(final ThucydidesSystemProperty propertyName) {
+        return Arrays.stream(getOptionalProperty(propertyName).orElse("").split(",")).map(String::trim).collect(Collectors.toList());
+    }
+
+    public boolean getBooleanProperty(final ThucydidesSystemProperty propertyName, boolean defaultValue) {
+        String value = getOptionalProperty(propertyName).orElse(Boolean.toString(defaultValue));
+        return Boolean.parseBoolean(value);
+    }
+
+    public Optional<String> getOptionalProperty(List<String> possiblePropertyNames) {
         String propertyValue = null;
-        for (String propertyName : propertyNames) {
+        for (String propertyName : possiblePropertyNames) {
             propertyValue = getPropertyValue(propertyName);
+            if (propertyValue != null) {
+                break;
+            }
+        }
+
+        if (propertyValue == null) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(substituteProperties(propertyValue));
+    }
+
+    public Optional<Integer> getOptionalInteger(List<String> possiblePropertyNames) {
+        String propertyValue = null;
+        for (String propertyName : possiblePropertyNames) {
+            propertyValue = getPropertyValue(propertyName);
+            if (propertyValue != null) {
+                break;
+            }
+        }
+        if (propertyValue == null) {
+            return Optional.empty();
+        }
+        return Optional.of(Integer.parseInt(propertyValue));
+    }
+
+    public Optional<Integer> getOptionalInteger(String... propertyNames) {
+        return getOptionalInteger(Arrays.asList(propertyNames));
+    }
+
+    public Optional<String> getOptionalProperty(String... propertyNames) {
+        return getOptionalProperty(Arrays.asList(propertyNames));
+    }
+
+    public Optional<String> getOptionalProperty(ThucydidesSystemProperty... properties) {
+        String propertyValue = null;
+        for (ThucydidesSystemProperty property : properties) {
+            propertyValue = getPropertyValue(property.getPropertyName());
             if (propertyValue != null) {
                 break;
             }
@@ -216,8 +264,13 @@ public class EnvironmentSpecificConfiguration {
         return null;
     }
 
+    private static final Map<EnvironmentVariables, EnvironmentSpecificConfiguration> ENVIRONMENT_SPECIFIC_CONFIGS = new HashMap<>();
+
     public static EnvironmentSpecificConfiguration from(EnvironmentVariables environmentVariables) {
-        return new EnvironmentSpecificConfiguration(environmentVariables);
+        if (!ENVIRONMENT_SPECIFIC_CONFIGS.containsKey(environmentVariables)) {
+            ENVIRONMENT_SPECIFIC_CONFIGS.put(environmentVariables, new EnvironmentSpecificConfiguration(environmentVariables));
+        }
+        return ENVIRONMENT_SPECIFIC_CONFIGS.get(environmentVariables);
     }
 
     private static EnvironmentStrategy environmentStrategyDefinedIn(EnvironmentVariables environmentVariables) {

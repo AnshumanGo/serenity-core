@@ -4,6 +4,7 @@ import net.serenitybdd.core.pages.PageObject;
 import net.serenitybdd.core.pages.WebElementFacade;
 import net.serenitybdd.screenplay.abilities.BrowseTheWeb;
 import org.openqa.selenium.By;
+import org.openqa.selenium.SearchContext;
 import org.openqa.selenium.WebDriver;
 
 import java.util.List;
@@ -26,19 +27,23 @@ public class TargetBuilder<T> {
         return this;
     }
 
-    public Target locatedBy(String cssOrXPathSelector) {
+    public SearchableTarget locatedBy(String cssOrXPathSelector) {
         return new XPathOrCssTarget(targetElementName, cssOrXPathSelector, iFrame, Optional.empty());
     }
 
-    public Target locatedBy(Function<PageObject, List<WebElementFacade>> locationStrategy) {
+    /**
+     * Locate an element using a location strategy function.
+     * The function takes a Serenity Page Object representing the current web page, and returns a list of matching WebElementFacade objects.
+     */
+    public SearchableTarget locatedBy(Function<SearchContext, List<WebElementFacade>> locationStrategy) {
         return new LambdaTarget(targetElementName, locationStrategy, iFrame, Optional.empty());
     }
 
-    public Target locatedByFirstMatching(String... cssOrXPathSelectors) {
+    public SearchableTarget locatedByFirstMatching(String... cssOrXPathSelectors) {
         return new MultiXPathOrCssTarget(targetElementName, iFrame, Optional.empty(), cssOrXPathSelectors);
     }
 
-    public Target located(By locator) {
+    public SearchableTarget located(By locator) {
         return new ByTarget(targetElementName, locator, iFrame);
     }
 
@@ -59,7 +64,7 @@ public class TargetBuilder<T> {
         }
 
         public Target locatedForIOS(By iosLocator) {
-            return new ByTarget(this.targetElementName, this.androidLocator, iosLocator, this.iFrame);
+            return new ByMobileTarget(this.targetElementName, this.androidLocator, iosLocator, this.iFrame);
         }
     }
 }

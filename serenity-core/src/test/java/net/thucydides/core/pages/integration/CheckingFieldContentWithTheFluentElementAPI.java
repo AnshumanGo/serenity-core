@@ -14,6 +14,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
 import java.time.temporal.ChronoUnit;
+import java.util.Collection;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasItems;
@@ -166,7 +167,7 @@ public class CheckingFieldContentWithTheFluentElementAPI  {
         page.element(page.firstName).waitUntilVisible();
     }
 
-    @Test(expected = ElementNotVisibleException.class)
+    @Test(expected = ElementNotInteractableException.class)
     public void should_throw_expection_if_waiting_for_field_that_does_not_appear() {
         page.setWaitForTimeout(500);
         assertThat(page.element(page.hiddenField).isCurrentlyVisible(), is(false));
@@ -244,7 +245,6 @@ public class CheckingFieldContentWithTheFluentElementAPI  {
     public void should_timeout_when_waiting_for_elements_to_dissapear() {
         page.waitForTextToDisappear("A visible title", 500);
     }
-
 
     @Test
     public void should_select_dropdown_by_visible_text() {

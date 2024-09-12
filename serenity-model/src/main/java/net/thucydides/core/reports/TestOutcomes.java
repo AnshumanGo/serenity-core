@@ -5,6 +5,7 @@ import net.serenitybdd.core.collect.NewList;
 import net.serenitybdd.core.collect.NewSet;
 import net.serenitybdd.core.environment.ConfiguredEnvironment;
 import net.serenitybdd.core.strings.Joiner;
+import net.thucydides.core.configuration.SystemPropertiesConfiguration;
 import net.thucydides.core.guice.Injectors;
 import net.thucydides.core.model.*;
 import net.thucydides.core.model.flags.Flag;
@@ -53,6 +54,7 @@ public class TestOutcomes {
     private final String label;
     private final TestTag testTag;
     private final TestResult resultFilter;
+    private ZonedDateTime startTime;
 
     /**
      * Reference to the test statistics service provider, used to inject test history if required.
@@ -71,7 +73,8 @@ public class TestOutcomes {
                            EnvironmentVariables environmentVariables) {
         outcomeCount = outcomeCount + outcomes.size();
 
-        this.outcomes = Collections.unmodifiableList(sorted(outcomes));
+        this.outcomes = sorted(outcomes);
+        this.startTime = startTime().orElse(null);
 
         this.estimatedAverageStepCount = estimatedAverageStepCount;
         this.label = label;
@@ -130,7 +133,6 @@ public class TestOutcomes {
         List<? extends TestOutcome> filteredOutcomes = outcomeFilter.outcomesFilteredByTagIn(getOutcomes());
 
         return TestOutcomes.of(filteredOutcomes).withLabel(label);
-//        return new TestOutcomes(filteredOutcomes, this.estimatedAverageStepCount, label);
     }
 
 
@@ -188,7 +190,7 @@ public class TestOutcomes {
     }
 
     public static TestOutcomes of(Collection<? extends TestOutcome> outcomes) {
-        return new TestOutcomes(outcomes,ConfiguredEnvironment.getConfiguration().getEstimatedAverageStepCount());
+        return new TestOutcomes(outcomes, SystemPropertiesConfiguration.DEFAULT_ESTIMATED_AVERAGE_STEP_COUNT);
     }
 
     private static List<TestOutcome> NO_OUTCOMES = new ArrayList<>();
@@ -239,7 +241,7 @@ public class TestOutcomes {
                 .collect(Collectors.toList());
     }
 
-    private final Set<String> SECOND_CLASS_TAG_TYPES = NewSet.of("version","feature", "story");
+    private final static Set<String> SECOND_CLASS_TAG_TYPES = NewSet.of("version","feature", "story");
 
     public List<String> getFirstClassTagTypes() {
         return getTagTypes()
@@ -401,12 +403,16 @@ public class TestOutcomes {
         );
     }
 
-    public Optional<ZonedDateTime> getStartTime() {
+    private Optional<ZonedDateTime> startTime() {
         return outcomes.stream()
-                .filter(outcome -> outcome.getStartTime() != null)
                 .map(TestOutcome::getStartTime)
+                .filter(Objects::nonNull)
                 .sorted()
                 .findFirst();
+    }
+
+    public Optional<ZonedDateTime> getStartTime() {
+        return Optional.ofNullable(startTime);
     }
 
     public TestOutcomes ofType(TestType testType) {
@@ -445,24 +451,30 @@ public class TestOutcomes {
         }
     }
 
+    private boolean hasResult(TestResult[] results, TestResult expectedResult) {
+        for(int i = 0; i < results.length; i++) {
+            if (results[i] == expectedResult) return true;
+        }
+        return false;
+    }
+
     private int countScenariosWithResults(TestOutcome outcome, TestResult... results) {
-        List<TestResult> expectedResults = Arrays.asList(results);
 
         if (!outcome.isDataDriven()) {
-            return (expectedResults.contains(outcome.getResult())) ? 1 : 0;
+            return (hasResult(results, outcome.getResult())) ? 1 : 0;
         }
 
         if (outcome.isManual()) {
-            return (int) stepsWithResultIn(outcome.getTestSteps(), expectedResults);
+            return (int) stepsWithResultIn(outcome.getTestSteps(), results);
         }
 
         if ((dataTableRowResultsAreUndefinedIn(outcome.getDataTable()) || isJUnit(outcome) || isJUnit5(outcome))
             && outcome.getTestSteps().size() >= outcome.getDataTable().getSize()) {
-            return (int) stepsWithResultIn(outcome.getTestSteps(), expectedResults);
+            return (int) stepsWithResultIn(outcome.getTestSteps(), results);
         }
 
         return (int) outcome.getDataTable().getRows().stream()
-                .filter(row -> expectedResults.contains(row.getResult()))
+                .filter(row -> hasResult(results, row.getResult()))
                 .count();
     }
 
@@ -474,9 +486,9 @@ public class TestOutcomes {
         return (outcome.getTestSource() == null) || (TestSourceType.TEST_SOURCE_JUNIT5.getValue().equalsIgnoreCase(outcome.getTestSource()));
     }
 
-    private long stepsWithResultIn(List<TestStep> steps, List<TestResult> expectedResults) {
+    private long stepsWithResultIn(List<TestStep> steps, TestResult... results) {
         return steps.stream()
-                .filter(step -> expectedResults.contains(step.getResult()))
+                .filter(step -> hasResult(results,step.getResult()))
                 .count();
     }
 
@@ -574,12 +586,12 @@ public class TestOutcomes {
 
         Stream<TestTag> from(TestOutcome outcome) {
             return outcome.getAllTags().stream()
-                    .filter(tag -> tag.normalisedType().equals(tagType));
+                    .filter(tag -> tag.normalisedType().equalsIgnoreCase(tagType));
         }
 
         List<TestTag> in(TestOutcome testOutcome) {
             return testOutcome.getAllTags().stream()
-                    .filter(tag -> tag.normalisedType().equals(tagType))
+                    .filter(tag -> tag.normalisedType().equalsIgnoreCase(tagType))
                     .collect(Collectors.toList());
         }
     }
@@ -676,12 +688,16 @@ public class TestOutcomes {
     }
 
     private boolean hasMatchingTag(TestOutcome outcome, TestTag tag) {
-        if (isAnIssue(tag)) {
-            return outcome.hasIssue(tag.getName());
-        }
-        return outcome.hasTag(tag) || outcome.hasAMoreGeneralFormOfTag(tag);// || outcome.hasAMoreSpecificFormOfTag(tag);
-    }
+        Optional<Boolean> cachedMatch = TestTagCache.hasMatchingTag(outcome, tag);
 
+        if (cachedMatch.isPresent()) {
+            return cachedMatch.get();
+        } else {
+            boolean matchFound = isAnIssue(tag) ? outcome.hasIssue(tag.getName()) : outcome.hasTag(tag) || outcome.hasAMoreGeneralFormOfTag(tag);
+            TestTagCache.storeMatchingTagResult(outcome, tag, matchFound);
+            return matchFound;
+        }
+    }
 
     private boolean isAnIssue(TestTag tag) {
         return tag.getType().equalsIgnoreCase("issue");
@@ -707,6 +723,13 @@ public class TestOutcomes {
         return TestOutcomes.of(outcomesFilteredByResult(TestResult.FAILURE))
                 .withLabel(labelForTestsWithStatus("failing tests"))
                 .withResultFilter(TestResult.FAILURE)
+                .withRootOutcomes(getRootOutcomes());
+    }
+
+    public TestOutcomes getAbortedTests() {
+        return TestOutcomes.of(outcomesFilteredByResult(TestResult.ABORTED))
+                .withLabel(labelForTestsWithStatus("aborted tests"))
+                .withResultFilter(TestResult.ABORTED)
                 .withRootOutcomes(getRootOutcomes());
     }
 
@@ -1027,6 +1050,22 @@ public class TestOutcomes {
     }
 
     public int getTestCount() {
+        return getScenarioCount();
+    }
+
+    /**
+     * The test case count include all individual tests data-driven tests. A data-driven test counts as 1 test.
+     * @return
+     */
+    public int getTestCaseCount() {
+        return outcomes.size();
+    }
+
+    /**
+     * The scenario count include all individual tests and rows in data-driven tests.
+     * @return
+     */
+    public int getScenarioCount() {
         return outcomes.stream()
                 .mapToInt(TestOutcome::getTestCount)
                 .sum();
@@ -1113,4 +1152,14 @@ public class TestOutcomes {
         }
     }
 
+    public boolean isEmpty() {
+        return getOutcomes().isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        return "TestOutcomes{" +
+                "outcomes=" + outcomes +
+                '}';
+    }
 }

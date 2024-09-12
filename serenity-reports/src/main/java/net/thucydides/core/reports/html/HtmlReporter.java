@@ -33,12 +33,13 @@ public abstract class HtmlReporter extends ThucydidesReporter {
     private static final String DEFAULT_SOURCE_DIR = "target/site/serenity";
     private String resourceDirectory = DEFAULT_RESOURCE_DIRECTORY;
     private final TemplateManager templateManager;
-    private final EnvironmentVariables environmentVariables;
+    protected final EnvironmentVariables environmentVariables;
     private final Charset charset;
     protected final ConsoleColors colored;
 
-    protected static final String TIMESTAMP_FORMAT = "dd-MM-YYYY HH:mm:ss";
-    protected static final String ZONED_TIMESTAMP_FORMAT = "dd-MM-YYYY HH:mm:ss Z";
+    protected static final String TIMESTAMP_FORMAT = "dd-MM-yyyy HH:mm:ss";
+    protected static final String READABLE_TIMESTAMP_FORMAT = "MMM dd, yyyy HH:mm:ss";
+    protected static final String ZONED_TIMESTAMP_FORMAT = "dd-MM-yyyy HH:mm:ss Z";
 
     public HtmlReporter() {
         this(Injectors.getInjector().getProvider(EnvironmentVariables.class).get() );
@@ -93,9 +94,9 @@ public abstract class HtmlReporter extends ThucydidesReporter {
         Path sourcePath = getSourceDirectoryOrDefault().toPath();
         Path destinationPath = getOutputDirectory().toPath();
         if (Files.exists(sourcePath) && !Files.isSameFile(sourcePath, destinationPath)) {
-            LOGGER.debug("Copying directory contents from {} to {}", sourcePath,destinationPath);
+            LOGGER.trace("Copying directory contents from {} to {}", sourcePath,destinationPath);
             copyDirectoryContents(sourcePath, destinationPath);
-            LOGGER.debug("Copying directory contents from {} to {} done", sourcePath,destinationPath);
+            LOGGER.trace("Copying directory contents from {} to {} done", sourcePath,destinationPath);
         }
     }
 
